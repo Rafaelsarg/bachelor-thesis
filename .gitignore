@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Environments
+.env/
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Virtual environment files
+*.egg-info/
+*.egg
+
+# Pipfile & poetry
+Pipfile.lock
+poetry.lock
+
+# pyenv
+.python-version
+
+# VSCode
+.vscode/
+
+# PyCharm
+.idea/
+
+# Data files
+data/raw/
+data/processed/
+data/models/
+
+# Results
+results/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+*.dockerfile
+
+# Jupyter Notebook outputs (optional, if you want to ignore)
+notebooks/*.ipynb
+
+# Config files (if containing secrets, optional)
+# configs/*.yaml
+
+# Ignore specific scripts (optional)
+scripts/*.sh
+
+# Misc
+*.swp
