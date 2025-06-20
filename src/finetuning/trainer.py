@@ -13,21 +13,22 @@ class GenericTrainer(BaseTrainer):
         super().__init__(model_name, dataset_path, output_dir, cfg, prompt_formatter)
 
         self.training_args = SFTConfig(
-            output_dir=self.checkpoints_dir, 
-            per_device_train_batch_size=self.sft_cfg.batch_size,
-            num_train_epochs=self.sft_cfg.epochs,
-            learning_rate=self.sft_cfg.lr,
+            output_dir=self.checkpoints_dir,
+            logging_dir=self.logs_output_dir,
             save_strategy="epoch",
             bf16=True,
-            gradient_accumulation_steps=self.sft_cfg.gradient_accumulation_steps,
-            max_grad_norm=self.sft_cfg.max_grad_norm,
-            lr_scheduler_type=self.sft_cfg.lr_scheduler_type,
-            warmup_ratio=self.sft_cfg.warmup_ratio,
-            optim=self.sft_cfg.optim,
-            logging_dir=self.logs_output_dir,
-            logging_steps=self.sft_cfg.logging_steps,
-            max_seq_length=self.sft_cfg.max_seq_length,
+            per_device_train_batch_size=self.sft_cfg["batch_size"],
+            num_train_epochs=self.sft_cfg["epochs"],
+            learning_rate=self.sft_cfg["lr"],
+            gradient_accumulation_steps=self.sft_cfg["gradient_accumulation_steps"],
+            max_grad_norm=self.sft_cfg["max_grad_norm"],
+            lr_scheduler_type=self.sft_cfg["lr_scheduler_type"],
+            warmup_ratio=self.sft_cfg["warmup_ratio"],
+            optim=self.sft_cfg["optim"],
+            logging_steps=self.sft_cfg["logging_steps"],
+            max_seq_length=self.sft_cfg["max_seq_length"]
         )
+
 
         self.trainer = SFTTrainer(
             model=self.model,

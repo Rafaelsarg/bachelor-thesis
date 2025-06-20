@@ -4,6 +4,7 @@ from datasets import DatasetDict
 from peft import LoraConfig, get_peft_model
 from huggingface_hub import login
 from transformers.utils.quantization_config import BitsAndBytesConfig
+from omegaconf import OmegaConf
 import wandb
 import torch
 import os
@@ -26,8 +27,8 @@ class BaseTrainer(ABC):
         self.output_dir = output_dir
         self.prompt_formatter = prompt_formatter
 
-        self.sft_cfg = cfg.sft_config
-        self.lora_cfg = cfg.lora_config
+        self.sft_cfg = OmegaConf.to_container(cfg.sft_config, resolve=True)
+        self.lora_cfg = OmegaConf.to_container(cfg.lora_config, resolve=True)
         self.hf_token = cfg.hf_token if hasattr(cfg, "hf_token") else os.environ.get("HF_TOKEN")
 
         # 2. Output dirs
@@ -47,11 +48,11 @@ class BaseTrainer(ABC):
             name=getattr(cfg, "run_name", None),
             config={
                 "model_name": model_name,
-                "batch_size": self.sft_cfg.batch_size,
-                "learning_rate": self.sft_cfg.lr,
-                "epochs": self.sft_cfg.epochs,
-                "gradient_accumulation_steps": self.sft_cfg.gradient_accumulation_steps,
-                "target_modules": self.lora_cfg.target_modules,
+                "batch_size": self.sft_cfg["batch_size"],
+                "learning_rate": self.sft_cfg["lr"],
+                "epochs": self.sft_cfg["epochs"],
+                "gradient_accumulation_steps": self.sft_cfg["gradient_accumulation_steps"],
+                "target_modules": self.lora_cfg["target_modules"],
                 "task": getattr(cfg, "task", "unknown")
             },
             dir=self.logs_output_dir
@@ -105,10 +106,10 @@ class BaseTrainer(ABC):
         # Create the LoRA configuration specifying which modules to fine-tune
         # and how the low-rank adaptation should be applied.
         lora_config = LoraConfig(
-            r=self.lora_cfg.r,
-            lora_alpha=self.lora_cfg.alpha,
-            target_modules=self.lora_cfg.target_modules,
-            lora_dropout=self.lora_cfg.dropout,
+            r=self.lora_cfg["r"],
+            lora_alpha=self.lora_cfg["alpha"],
+            target_modules=self.lora_cfg["target_modules"],
+            lora_dropout=self.lora_cfg["dropout"],
             bias="none",
             task_type="CAUSAL_LM"
         )
