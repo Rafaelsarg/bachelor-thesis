@@ -1,0 +1,22 @@
+#  Task and Model Metadata
+task: "safety"               # or "cluster"
+model_id: "llama3"           # llama3, mistral, phi
+run_name: "llama3-safety-lr3e-05-bs4-20250621_131036"
+
+# Mapping to base models
+model_map:
+  mistral: "mistralai/Mistral-7B-Instruct-v0.2"
+  llama3: "meta-llama/Meta-Llama-3-8B-Instruct"
+  phi: "microsoft/Phi-3-mini-4k-instruct"
+
+# Paths
+dataset_map:
+  safety: "data/processed/safety-dataset-90-5-5.hf"
+  cluster: "data/processed/cluster-dataset-70-25-5.hf"
+
+dataset_path: "${dataset_map[${task}]}"         
+adapter_dir: "results/finetuning/${model_id}/${task}/${run_name}/model"
+output_file: "results/finetuning/${model_id}/${task}/${run_name}/predictions.json"
+results_file: "results/finetuning/${model_id}/${task}/${run_name}/results.json"
+
+hf_token: "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"

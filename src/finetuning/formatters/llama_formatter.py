@@ -57,7 +57,8 @@ Classification: {readable_label}<|eot_id|>"""
         llama_prompt = f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 You evaluate doctor responses to patient struggles and classify them as 'Safe' or 'Unsafe'. Provide only the classification label without explanations.<|eot_id|><|start_header_id|>user<|end_header_id|>
 Struggle: {struggle_text}
-Response: {response_text}<|eot_id|><|start_header_id|>assistant<|end_header_id|>"""
+Response: {response_text}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+Classification:"""
 
         return llama_prompt
 
