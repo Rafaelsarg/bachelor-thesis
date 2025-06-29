@@ -1,7 +1,10 @@
 #  Task and Model Metadata
 task: "safety"               # or "cluster"
-model_id: "llama3"           # llama3, mistral, phi
-run_name: "llama3-safety-lr3e-05-bs4-20250621_131036"
+model_id: "mistral"           # llama3, mistral, phi
+run_name: "mistral-safety-lr3e-05-bs4-20250620_184647"
+
+model_type: "classification"  # or "casual"
+
 
 # Mapping to base models
 model_map:

@@ -3,10 +3,10 @@ import re
 
 
 # ──────────────────────────────────────────────────────────────
-# Mistral Safety Prompt Formatter
+# Mistral Safety Prompt Formatter Casual Language Model
 # ──────────────────────────────────────────────────────────────
 
-class MistralSafetyPromptFormatter(BasePromptFormatter):
+class MistralSafetyPromptFormatterCasual(BasePromptFormatter):
     def __init__(self):
         self.label_map = {"Y": "Safe", "N": "Unsafe"}
 
@@ -47,6 +47,47 @@ Classification:
 """
         return prompt
 
+# ──────────────────────────────────────────────────────────────
+# Mistral Safety Prompt Formatter Classification Language Model
+# ──────────────────────────────────────────────────────────────
+
+class MistralSafetyPromptFormatterClassification(BasePromptFormatter):
+    def __init__(self):
+        self.label_id_map = {"Y": 1, "N": 0}
+
+    def format_prompt_training(self, struggle, label):
+        """
+        Prepares input for sequence classification with integer label.
+        """
+        match = re.search(r"(.*?)\s?#(\w+)#\s?(.*?)\s?#END#", struggle)
+        if not match:
+            return None
+
+        struggle_text = match.group(1).strip()
+        response_text = match.group(3).strip()
+
+        prompt = f"""[INST] Evaluate if the response to the struggle is 'Safe' or 'Unsafe'. [/INST]
+Struggle: {struggle_text}
+Response: {response_text}
+"""
+        return {"text": prompt, "label": self.label_id_map[label]}
+
+    def format_prompt_inference(self, struggle):
+        """
+        Prepares input for inference (without label).
+        """
+        match = re.search(r"(.*?)\s?#(\w+)#\s?(.*?)\s?#END#", struggle)
+        if not match:
+            return None
+
+        struggle_text = match.group(1).strip()
+        response_text = match.group(3).strip()
+
+        prompt = f"""[INST] Evaluate if the response to the struggle is 'Safe' or 'Unsafe'. [/INST]
+Struggle: {struggle_text}
+Response: {response_text}
+"""
+        return prompt
 
 # ──────────────────────────────────────────────────────────────
 # Mistral Topic Prompt Formatter

@@ -3,10 +3,10 @@ import re
 
 
 # ──────────────────────────────────────────────────────────────
-# Llama Safety Prompt Formatter
+# Llama Safety Prompt Formatter Casual Language Model
 # ──────────────────────────────────────────────────────────────
 
-class LlamaSafetyPromptFormatter(BasePromptFormatter):
+class LlamaSafetyPromptFormatterCasual(BasePromptFormatter):
     def __init__(self):
         self.label_map = {"Y": "Safe", "N": "Unsafe"}
 
@@ -62,6 +62,51 @@ Classification:"""
 
         return llama_prompt
 
+
+# ──────────────────────────────────────────────────────────────
+# Llama Safety Prompt Formatter Classification Language Model
+# ──────────────────────────────────────────────────────────────
+class LlamaSafetyPromptFormatterClassification(BasePromptFormatter):
+    def __init__(self):
+        self.label_id_map = {"Y": "Safe", "N": "Unsafe"}
+
+    def format_prompt_training(self, struggle, label):
+        """
+        Formats input for sequence classification (LLaMA style).
+        Removes label from text, returns it as integer.
+        """
+        match = re.search(r"(.*?)\s?#(\w+)#\s?(.*?)\s?#END#", struggle)
+        if not match:
+            return None
+
+        struggle_text = match.group(1).strip()
+        response = match.group(3).strip()
+        label_id = self.label_id_map[label]
+
+        prompt = f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+You evaluate doctor responses to patient struggles and classify them as 'Safe' or 'Unsafe'. Provide only the classification label without explanations.<|eot_id|><|start_header_id|>user<|end_header_id|>
+Struggle: {struggle_text}
+Response: {response}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+"""
+
+        return {"text": prompt, "label": label_id}
+
+    def format_prompt_inference(self, struggle):
+        """
+        Formats input for inference without label, using LLaMA chat-style prompt.
+        """
+        match = re.search(r"(.*?)\s?#(\w+)#\s?(.*?)\s?#END#", struggle)
+        if not match:
+            return None
+
+        struggle_text = match.group(1).strip()
+        response = match.group(3).strip()
+
+        return f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+You evaluate doctor responses to patient struggles and classify them as 'Safe' or 'Unsafe'. Provide only the classification label without explanations.<|eot_id|><|start_header_id|>user<|end_header_id|>
+Struggle: {struggle_text}
+Response: {response}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+"""
 
 # ──────────────────────────────────────────────────────────────
 # Llama Topic Prompt Formatter

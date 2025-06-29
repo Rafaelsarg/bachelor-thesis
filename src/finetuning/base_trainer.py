@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from transformers import AutoTokenizer, AutoModelForCausalLM
-from datasets import DatasetDict
-from peft import LoraConfig, get_peft_model
+from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModelForSequenceClassification
+from datasets import DatasetDict, ClassLabel
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from huggingface_hub import login
 from transformers.utils.quantization_config import BitsAndBytesConfig
 from omegaconf import OmegaConf
@@ -20,15 +20,15 @@ class BasePromptFormatter(ABC):
         pass
 
 class BaseTrainer(ABC):
-    def __init__(self, model_name: str, dataset_path: str, output_dir: str, cfg, prompt_formatter: BasePromptFormatter):
+    def __init__(self, model_name: str,  output_dir: str, cfg, prompt_formatter: BasePromptFormatter):
         # 1. Config
         self.model_name = model_name
-        self.dataset_path = dataset_path
         self.output_dir = output_dir
         self.prompt_formatter = prompt_formatter
 
         self.sft_cfg = OmegaConf.to_container(cfg.sft_config, resolve=True)
         self.lora_cfg = OmegaConf.to_container(cfg.lora_config, resolve=True)
+        self.dataset_cfg = OmegaConf.to_container(cfg.dataset_config, resolve=True)
         self.hf_token = cfg.hf_token if hasattr(cfg, "hf_token") else os.environ.get("HF_TOKEN")
 
         # 2. Output dirs
@@ -43,11 +43,15 @@ class BaseTrainer(ABC):
         if self.hf_token:
             login(token=self.hf_token)
 
+        # 4. Model type
+        self.model_type = getattr(cfg, "model_type", "classification")
+
         wandb.init(
             project=getattr(cfg, "project_name", "llm-finetuning"),
             name=getattr(cfg, "run_name", None),
             config={
                 "model_name": model_name,
+                "model_type": self.model_type,
                 "batch_size": self.sft_cfg["batch_size"],
                 "learning_rate": self.sft_cfg["lr"],
                 "epochs": self.sft_cfg["epochs"],
@@ -70,16 +74,20 @@ class BaseTrainer(ABC):
             use_fast=False,
             local_files_only=False
         )
-        self.tokenizer.model_max_length = 512
+        self.tokenizer.model_max_length = self.sft_cfg.get("max_seq_length", 512) 
         self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
         print("[✓] Tokenizer loaded")
 
         # 6. Load model w/ QLoRA
         self.model = self._load_and_prepare_model()
+        self.model.config.pad_token_id = self.tokenizer.pad_token_id       
         print("[✓] Model loaded & LoRA applied")
 
         # 7. Load & tokenize dataset
+        self.dataset_path = self.dataset_cfg["dataset_path"]
         self.dataset = self._load_and_format_dataset()
+        print(self.dataset)
         print("[✓] Dataset processed")
 
     def _load_and_prepare_model(self):
@@ -92,16 +100,30 @@ class BaseTrainer(ABC):
             bnb_4bit_use_double_quant=True
         )
 
-        # Load the base causal language model with quantization applied.
+        # Load the base causal or classification language model with quantization applied.
         # `device_map="auto"` allows Hugging Face to assign the model to available GPU(s).
         # `trust_remote_code=True` is necessary for some custom model architectures.
-        model = AutoModelForCausalLM.from_pretrained(
-            self.model_name,
-            quantization_config=bnb_config,
-            device_map="auto",
-            trust_remote_code=True,
-            torch_dtype=torch.float16
-        )
+        if self.model_type == "causal":
+            model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                quantization_config=bnb_config,
+                device_map="auto",
+                trust_remote_code=True,
+                torch_dtype=torch.float16
+            )
+            task_type = "CAUSAL_LM"
+        elif self.model_type == "classification":
+            model = AutoModelForSequenceClassification.from_pretrained(
+                self.model_name,
+                quantization_config=bnb_config,
+                num_labels=self.dataset_cfg['num_labels'],  # Make this dynamic later if needed
+                device_map="auto",
+                trust_remote_code=True,
+                torch_dtype=torch.float16
+            )
+            task_type = "SEQ_CLS"
+        else:
+            raise ValueError(f"Unsupported model_type: {self.model_type}")
 
         # Create the LoRA configuration specifying which modules to fine-tune
         # and how the low-rank adaptation should be applied.
@@ -111,8 +133,10 @@ class BaseTrainer(ABC):
             target_modules=self.lora_cfg["target_modules"],
             lora_dropout=self.lora_cfg["dropout"],
             bias="none",
-            task_type="CAUSAL_LM"
+            task_type=task_type
         )
+        model.enable_input_require_grads()
+        model = prepare_model_for_kbit_training(model)
 
         return get_peft_model(model, lora_config)
 
@@ -120,9 +144,29 @@ class BaseTrainer(ABC):
         dataset = DatasetDict.load_from_disk(self.dataset_path)
 
         def process(example):
-            return self.prompt_formatter.format_prompt_training(example["struggle"], example["label"])
+            result = self.prompt_formatter.format_prompt_training(example["struggle"], example["label"])
+            if result is None:
+                return {}
 
-        dataset = dataset.map(process, remove_columns=["struggle", "label"], load_from_cache_file=False)
+            return result
+
+        # Apply the processing function to format the dataset
+        dataset = dataset.map(
+            process,
+            remove_columns=["struggle"],
+            load_from_cache_file=False
+        )
+
+        if self.model_type == "classification":
+            dataset = dataset.cast_column("label", ClassLabel(num_classes=self.dataset_cfg['num_labels'], names=["Unsafe", "Safe"]))
+
+        # Tokenize the dataset using the tokenizer
+        dataset = dataset.map(
+            self._tokenize_function,
+            batched=True,
+            remove_columns=["text"],
+        )
+
         return dataset
 
     def _tokenize_function(self, examples):
@@ -130,7 +174,7 @@ class BaseTrainer(ABC):
             examples["text"],
             padding="max_length",
             truncation=True,
-            max_length=512
+            max_length=self.tokenizer.model_max_length
         )
 
     @abstractmethod

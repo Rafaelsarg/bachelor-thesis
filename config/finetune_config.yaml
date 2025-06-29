@@ -1,13 +1,13 @@
 # General metadata
 project_name: "Thesis - Safety Classification"
-run_name: "${model_id}-${task}-lr${sft_config.lr}-bs${sft_config.batch_size}-${now:%Y%m%d_%H%M%S}"
+run_name: "${model_id}-${task}-${model_type}-lr${sft_config.lr}-bs${sft_config.batch_size}-${now:%Y%m%d_%H%M%S}"
 group: "${task}"                 # safety, cluster
 tags: ["${model_id}", "${task}", "qlora", "lora"]
 task: "safety"
 hf_token: "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"
 
 # Model selector (choose in CLI)
-model_id: "mistral"  # or "llama3", "phi"
+model_id: "llama3"  # or "llama3", "phi"
 
 # Model names per LLM
 model_map:
@@ -15,33 +15,40 @@ model_map:
   llama3: "meta-llama/Meta-Llama-3-8B-Instruct"
   phi: "microsoft/Phi-3-mini-4k-instruct"
 
-# Dataset & output
-dataset_map:
-  safety: "data/processed/safety-dataset-90-5-5.hf"
-  cluster: "data/processed/cluster-dataset-70-25-5.hf"
-  
-dataset_path: "${dataset_map[${task}]}"
+# Model Type
+model_type: "classification"  # or "casual"
+
+dataset_config:
+  dataset_map:
+    safety: "data/processed/safety-dataset-90-5-5.hf"
+    cluster: "data/processed/cluster-dataset-70-25-5.hf"
+  dataset_path: "${dataset_config.dataset_map[${task}]}"
+  num_labels_map:
+    safety: 2
+    cluster: 12
+  num_labels: ${dataset_config.num_labels_map[${task}]}
+
 output_dir: "results/finetuning/${model_id}/${task}/${run_name}"
 
 # SFT config
 sft_config:
   sft_cfg:
-  batch_size: 4
+  batch_size: 8
   epochs: 3
   lr: 2e-5
   evaluation_strategy: "epoch" 
   gradient_accumulation_steps: 1
-  max_grad_norm: 1.0
+  max_grad_norm: 0.3
   lr_scheduler_type: "cosine"  
   warmup_ratio: 0.1
   optim: "adamw_torch" 
   logging_steps: 10
-  max_seq_length: 512
+  max_seq_length: 256
 
 
 # LoRA config (you can override these per model in CLI or a model-specific override file)
 lora_config:
-  r: 16
-  alpha: 32
-  target_modules: ["q_proj", "v_proj"]
+  r: 8
+  alpha: 16
+  target_modules: "all-linear"
   dropout: 0.05
