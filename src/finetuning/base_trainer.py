@@ -5,9 +5,11 @@ from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from huggingface_hub import login
 from transformers.utils.quantization_config import BitsAndBytesConfig
 from omegaconf import OmegaConf
+from collections import Counter
 import wandb
 import torch
 import os
+import math
 
 
 class BasePromptFormatter(ABC):
@@ -45,6 +47,9 @@ class BaseTrainer(ABC):
 
         # 4. Model type
         self.model_type = getattr(cfg, "model_type", "classification")
+
+        # 5. Loss function
+        self.loss_function = getattr(cfg, "loss_function", "custom")
 
         wandb.init(
             project=getattr(cfg, "project_name", "llm-finetuning"),
@@ -89,6 +94,13 @@ class BaseTrainer(ABC):
         self.dataset = self._load_and_format_dataset()
         print(self.dataset)
         print("[✓] Dataset processed")
+        # 8. Compute class weights if needed
+        if self.model_type == "classification":
+            self.class_weights = self._compute_class_weights(
+                dataset_split="train",
+                label_column="label"
+            )
+            print(f"[✓] Class weights computed: {self.class_weights.tolist()}")
 
     def _load_and_prepare_model(self):
         # Configure 4-bit quantization using BitsAndBytes for QLoRA.
@@ -103,7 +115,7 @@ class BaseTrainer(ABC):
         # Load the base causal or classification language model with quantization applied.
         # `device_map="auto"` allows Hugging Face to assign the model to available GPU(s).
         # `trust_remote_code=True` is necessary for some custom model architectures.
-        if self.model_type == "causal":
+        if self.model_type == "casual":
             model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
                 quantization_config=bnb_config,
@@ -113,13 +125,18 @@ class BaseTrainer(ABC):
             )
             task_type = "CAUSAL_LM"
         elif self.model_type == "classification":
+            label2id = self.dataset_cfg["label2id"]
+            id2label = {v: k for k, v in label2id.items()}
+
             model = AutoModelForSequenceClassification.from_pretrained(
                 self.model_name,
                 quantization_config=bnb_config,
                 num_labels=self.dataset_cfg['num_labels'],  # Make this dynamic later if needed
                 device_map="auto",
                 trust_remote_code=True,
-                torch_dtype=torch.float16
+                torch_dtype=torch.float16,
+                id2label=id2label,
+                label2id=label2id
             )
             task_type = "SEQ_CLS"
         else:
@@ -145,26 +162,37 @@ class BaseTrainer(ABC):
 
         def process(example):
             result = self.prompt_formatter.format_prompt_training(example["struggle"], example["label"])
-            if result is None:
-                return {}
+            return result if result is not None else {}
 
-            return result
-
-        # Apply the processing function to format the dataset
+        # Apply prompt formatting
         dataset = dataset.map(
             process,
             remove_columns=["struggle"],
             load_from_cache_file=False
         )
 
+        # For classification, cast label column and keep labels
         if self.model_type == "classification":
-            dataset = dataset.cast_column("label", ClassLabel(num_classes=self.dataset_cfg['num_labels'], names=["Unsafe", "Safe"]))
+            dataset = dataset.cast_column(
+                "label",
+                ClassLabel(
+                    num_classes=self.dataset_cfg["num_labels"],
+                    names=self.dataset_cfg["label_names"]
+                )
+            )   
 
-        # Tokenize the dataset using the tokenizer
+
+        # Determine which columns to remove
+        remove_cols = ["text"]
+        if self.model_type == "causal":
+            # causal LM doesn't need "label"
+            remove_cols.append("label")
+
+        # Tokenize
         dataset = dataset.map(
             self._tokenize_function,
             batched=True,
-            remove_columns=["text"],
+            remove_columns=remove_cols,
         )
 
         return dataset
@@ -177,6 +205,35 @@ class BaseTrainer(ABC):
             max_length=self.tokenizer.model_max_length
         )
 
+    def _compute_class_weights(self, dataset_split="train", label_column="label") -> torch.Tensor:
+        """
+        Computes class weights based on inverse frequency in the specified dataset split.
+
+        Args:
+            dataset_split (str): Which split to use ("train", "validation", etc.)
+            label_column (str): Column name where class labels are stored.
+
+        Returns:
+            torch.Tensor: Tensor of class weights (dtype=torch.float32).
+        """
+        if self.dataset is None:
+            raise ValueError("Dataset is not loaded. Make sure to load it before computing class weights.")
+
+        labels = self.dataset[dataset_split][label_column]
+
+        label_counts = Counter(labels)
+        total = sum(label_counts.values())
+        num_classes = len(label_counts)
+
+        weights = []
+        for i in range(num_classes):
+            count = label_counts.get(i, 1)  # use 1 to avoid division by zero
+            weight = total / (num_classes * count)  # standard inverse frequency formula
+            weights.append(weight)
+
+        weight_tensor = torch.tensor(weights, dtype=torch.float32).to(self.device)
+        return weight_tensor
+    
     @abstractmethod
     def train(self):
         pass

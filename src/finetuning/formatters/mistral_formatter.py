@@ -90,13 +90,13 @@ Response: {response_text}
         return prompt
 
 # ──────────────────────────────────────────────────────────────
-# Mistral Topic Prompt Formatter
+# Mistral Topic Prompt Formatter Casual Language Model
 # ──────────────────────────────────────────────────────────────
 
-class MistralTopicPromptFormatter(BasePromptFormatter):
+class MistralTopicPromptFormatterCausal(BasePromptFormatter):
     def format_prompt_training(self, struggle, label):
         """
-        Formats input for training (topic classification).
+        For Causal LM: Return prompt as single 'text' field; label = input_ids.
         """
         prompt = f"""[INST] Categorize the patient's struggle into one of the following topics:
 "DIET_PLAN_ISSUES", "SOCIAL", "SITUATIONAL", "MOTIVATION", "EMOTIONS", "CRAVING_HABIT", "MENTAL_HEALTH",
@@ -108,14 +108,37 @@ Classification: {label}
         return {"text": prompt}
 
     def format_prompt_inference(self, struggle):
+        return f"""[INST] Categorize the patient's struggle into one of the following topics:
+"DIET_PLAN_ISSUES", "SOCIAL", "SITUATIONAL", "MOTIVATION", "EMOTIONS", "CRAVING_HABIT", "MENTAL_HEALTH",
+"ENERGY_EFFORT_CONVENIENCE", "PORTION_CONTROL", "KNOWLEDGE", "HEALTH_CONDITION", "NOT_APPLICABLE".
+Provide only the topic label without explanation. [/INST]
+Struggle: {struggle}
+Classification:"""
+
+
+# ──────────────────────────────────────────────────────────────
+# Mistral Topic Prompt Formatter Classification Language Model
+# ──────────────────────────────────────────────────────────────
+
+class MistralTopicPromptFormatterClassification(BasePromptFormatter):
+    def format_prompt_training(self, struggle, label):
         """
-        Formats input for inference (topic classification).
+        For sequence classification: return input prompt and integer label.
         """
         prompt = f"""[INST] Categorize the patient's struggle into one of the following topics:
 "DIET_PLAN_ISSUES", "SOCIAL", "SITUATIONAL", "MOTIVATION", "EMOTIONS", "CRAVING_HABIT", "MENTAL_HEALTH",
 "ENERGY_EFFORT_CONVENIENCE", "PORTION_CONTROL", "KNOWLEDGE", "HEALTH_CONDITION", "NOT_APPLICABLE".
 Provide only the topic label without explanation. [/INST]
 Struggle: {struggle}
-Classification:
 """
-        return prompt
+        return {"text": prompt, "label": label}
+
+    def format_prompt_inference(self, struggle):
+        return f"""[INST] Categorize the patient's struggle into one of the following topics:
+"DIET_PLAN_ISSUES", "SOCIAL", "SITUATIONAL", "MOTIVATION", "EMOTIONS", "CRAVING_HABIT", "MENTAL_HEALTH",
+"ENERGY_EFFORT_CONVENIENCE", "PORTION_CONTROL", "KNOWLEDGE", "HEALTH_CONDITION", "NOT_APPLICABLE".
+Provide only the topic label without explanation. [/INST]
+Struggle: {struggle}
+"""
+
+

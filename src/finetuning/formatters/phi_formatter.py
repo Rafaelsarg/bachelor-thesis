@@ -104,10 +104,10 @@ Response: {response}<|end|>
         return phi_prompt
         
 # ──────────────────────────────────────────────────────────────
-# Phi Topic Prompt Formatter
+# Phi Topic Prompt Formatter Casual Language Model
 # ──────────────────────────────────────────────────────────────
 
-class PhiTopicPromptFormatter(BasePromptFormatter):
+class PhiTopicPromptFormatterCasual(BasePromptFormatter):
     def format_prompt_training(self, struggle, label):
         """
         Formats training input for topic tasks.
@@ -138,3 +138,37 @@ Struggle: {struggle}<|end|>
 Classification:
 """
         return prompt
+
+
+# ──────────────────────────────────────────────────────────────
+# Phi Topic Prompt Formatter Classification Language Model
+# ──────────────────────────────────────────────────────────────
+
+class PhiTopicPromptFormatterClassification(BasePromptFormatter):
+    def format_prompt_training(self, struggle, label):
+        """
+        Formats training input for sequence classification.
+        Returns prompt text and numeric label.
+        """
+        prompt = f"""<|system|>
+Categorize the patient's struggle into one of the following topics:
+"DIET_PLAN_ISSUES", "SOCIAL", "SITUATIONAL", "MOTIVATION", "EMOTIONS", "CRAVING_HABIT", "MENTAL_HEALTH",
+"ENERGY_EFFORT_CONVENIENCE", "PORTION_CONTROL", "KNOWLEDGE", "HEALTH_CONDITION", "NOT_APPLICABLE".
+Provide only the topic label without explanations.<|end|>
+<|user|>
+Struggle: {struggle}<|end|>
+<|assistant|>"""
+        return {"text": prompt, "label": label}
+
+    def format_prompt_inference(self, struggle):
+        """
+        Formats inference input for sequence classification.
+        """
+        return f"""<|system|>
+Categorize the patient's struggle into one of the following topics:
+"DIET_PLAN_ISSUES", "SOCIAL", "SITUATIONAL", "MOTIVATION", "EMOTIONS", "CRAVING_HABIT", "MENTAL_HEALTH",
+"ENERGY_EFFORT_CONVENIENCE", "PORTION_CONTROL", "KNOWLEDGE", "HEALTH_CONDITION", "NOT_APPLICABLE".
+Provide only the topic label without explanations.<|end|>
+<|user|>
+Struggle: {struggle}<|end|>
+<|assistant|>"""

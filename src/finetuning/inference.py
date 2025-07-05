@@ -26,11 +26,21 @@ class GenericInference(BaseInference):
             return "Unknown"
 
         inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, padding=True).to(self.device)
-        with torch.no_grad():
-            outputs = self.model.generate(**inputs, max_new_tokens=10)
 
-        decoded = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        return self._extract_prediction(decoded)
+        with torch.no_grad():
+            if self.model_type == "casual":
+                outputs = self.model.generate(**inputs, max_new_tokens=10)
+                decoded = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+                return self._extract_prediction(decoded)
+
+            elif self.model_type == "classification":
+                outputs = self.model(**inputs)
+                logits = outputs.logits
+                pred_id = torch.argmax(logits, dim=-1).item()
+                return self.model.config.id2label.get(pred_id, "Unknown")
+
+            else:
+                raise ValueError(f"Unsupported model_type: {self.model_type}")
 
     def predict_dataset(self, dataset: Dataset) -> Tuple[List[str], List[str]]:
         """

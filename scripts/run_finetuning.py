@@ -1,6 +1,8 @@
 import sys
 import hydra
-from omegaconf import DictConfig
+import os
+import json
+from omegaconf import DictConfig, OmegaConf
 
 # === Adjust import path for src/ ===
 sys.path.append("src")
@@ -9,41 +11,66 @@ sys.path.append("src")
 from finetuning.trainer import GenericTrainer
 
 # === Import all formatter classes ===
-from finetuning.formatters.mistral_formatter import MistralSafetyPromptFormatterCasual,  MistralSafetyPromptFormatterClassification, MistralTopicPromptFormatter
-from finetuning.formatters.llama_formatter import LlamaSafetyPromptFormatterCasual, LlamaSafetyPromptFormatterClassification, LlamaTopicPromptFormatter
-from finetuning.formatters.phi_formatter import PhiSafetyPromptFormatterCasual, PhiSafetyPromptFormatterClassification, PhiTopicPromptFormatter
+from finetuning.formatters.mistral_formatter import MistralSafetyPromptFormatterCasual,  MistralSafetyPromptFormatterClassification, MistralTopicPromptFormatterCausal, MistralTopicPromptFormatterClassification
+from finetuning.formatters.llama_formatter import LlamaSafetyPromptFormatterCasual, LlamaSafetyPromptFormatterClassification, LlamaTopicPromptFormatterCausal, LlamaTopicPromptFormatterClassification
+from finetuning.formatters.phi_formatter import PhiSafetyPromptFormatterCasual, PhiSafetyPromptFormatterClassification, PhiTopicPromptFormatterCasual, PhiTopicPromptFormatterClassification
 
 # === Nested formatter registry: model_id -> task -> formatter ===
 FORMATTER_REGISTRY = {
     "mistral": {
         "safety": {
-            "causal": MistralSafetyPromptFormatterCasual,
+            "casual": MistralSafetyPromptFormatterCasual,
             "classification": MistralSafetyPromptFormatterClassification
         },
         "cluster": {
-            "causal": MistralTopicPromptFormatter,
+            "casual": MistralTopicPromptFormatterCausal,
+            "classification": MistralTopicPromptFormatterClassification
         }
     },
     "llama3": {
         "safety": {
-            "causal": LlamaSafetyPromptFormatterCasual,
+            "casual": LlamaSafetyPromptFormatterCasual,
             "classification": LlamaSafetyPromptFormatterClassification
         },
         "cluster": {
-            "causal": LlamaTopicPromptFormatter,
+            "casual": LlamaTopicPromptFormatterCausal,
+            "classification": LlamaTopicPromptFormatterClassification
         }
     },
     "phi": {
         "safety": {
-            "causal": PhiSafetyPromptFormatterCasual,
+            "casual": PhiSafetyPromptFormatterCasual,
             "classification": PhiSafetyPromptFormatterClassification
         },
         "cluster": {
-            "causal": PhiTopicPromptFormatter,
+            "casual": PhiTopicPromptFormatterCasual,
+            "classification": PhiTopicPromptFormatterClassification
         }
     }
 }
 
+def save_full_config(cfg, output_dir: str):
+    os.makedirs(output_dir, exist_ok=True)
+    config_dir = os.path.join(output_dir, "config")
+    os.makedirs(config_dir, exist_ok=True)
+
+    # Save the full config as one file
+    with open(os.path.join(config_dir, "full_config.json"), "w") as f:
+        json.dump(OmegaConf.to_container(cfg, resolve=True), f, indent=2)
+
+    # Optionally split and save specific parts
+    if "sft_config" in cfg and "sft_cfg" in cfg.sft_config:
+        with open(os.path.join(config_dir, "sft_config.json"), "w") as f:
+            json.dump(OmegaConf.to_container(cfg.sft_config.sft_cfg, resolve=True), f, indent=2)
+
+    if "lora_config" in cfg:
+        with open(os.path.join(config_dir, "lora_config.json"), "w") as f:
+            json.dump(OmegaConf.to_container(cfg.lora_config, resolve=True), f, indent=2)
+
+    if "dataset_config" in cfg:
+        with open(os.path.join(config_dir, "dataset_config.json"), "w") as f:
+            json.dump(OmegaConf.to_container(cfg.dataset_config, resolve=True), f, indent=2)
+                      
 @hydra.main(config_path="../config", config_name="finetune_config", version_base=None)
 def main(cfg: DictConfig):
     model_id = cfg.model_id
@@ -69,6 +96,7 @@ def main(cfg: DictConfig):
     )
 
     trainer.train()
+    save_full_config(cfg, cfg.output_dir)
 
 if __name__ == "__main__":
     main()

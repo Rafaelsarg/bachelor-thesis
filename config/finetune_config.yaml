@@ -3,7 +3,7 @@ project_name: "Thesis - Safety Classification"
 run_name: "${model_id}-${task}-${model_type}-lr${sft_config.lr}-bs${sft_config.batch_size}-${now:%Y%m%d_%H%M%S}"
 group: "${task}"                 # safety, cluster
 tags: ["${model_id}", "${task}", "qlora", "lora"]
-task: "safety"
+task: "cluster"
 hf_token: "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"
 
 # Model selector (choose in CLI)
@@ -27,28 +27,65 @@ dataset_config:
     safety: 2
     cluster: 12
   num_labels: ${dataset_config.num_labels_map[${task}]}
+  label_names_map:
+    safety: ["Unsafe", "Safe"]
+    cluster:
+      - "DIET_PLAN_ISSUES"
+      - "SOCIAL"
+      - "SITUATIONAL"
+      - "MOTIVATION"
+      - "EMOTIONS"
+      - "CRAVING_HABIT"
+      - "MENTAL_HEALTH"
+      - "ENERGY_EFFORT_CONVENIENCE"
+      - "PORTION_CONTROL"
+      - "KNOWLEDGE"
+      - "HEALTH_CONDITION"
+      - "NOT_APPLICABLE"
+  label_map:
+    safety:
+      label2id:
+        Unsafe: 0
+        Safe: 1
+    cluster:
+      label2id:
+        DIET_PLAN_ISSUES: 0
+        SOCIAL: 1
+        SITUATIONAL: 2
+        MOTIVATION: 3
+        EMOTIONS: 4
+        CRAVING_HABIT: 5
+        MENTAL_HEALTH: 6
+        ENERGY_EFFORT_CONVENIENCE: 7
+        PORTION_CONTROL: 8
+        KNOWLEDGE: 9
+        HEALTH_CONDITION: 10
+        NOT_APPLICABLE: 11
+  label2id: ${dataset_config.label_map[${task}].label2id}
+  label_names: ${dataset_config.label_names_map[${task}]}
 
 output_dir: "results/finetuning/${model_id}/${task}/${run_name}"
 
 # SFT config
 sft_config:
   sft_cfg:
-  batch_size: 8
-  epochs: 3
-  lr: 2e-5
-  evaluation_strategy: "epoch" 
-  gradient_accumulation_steps: 1
-  max_grad_norm: 0.3
-  lr_scheduler_type: "cosine"  
-  warmup_ratio: 0.1
-  optim: "adamw_torch" 
+  batch_size: 16               # ↑ increased to reduce update noise (if memory allows)
+  epochs: 10              # ↑ more training time to learn minority classes
+  lr: 2e-5                    # ↓ slightly lower LR for more stable convergence
+  evaluation_strategy: "epoch"
+  gradient_accumulation_steps: 2  # recompute if you increase batch size
+  max_grad_norm: 0.3        
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.05
+  optim: "paged_adamw_32bit"  # 🚀 more efficient for LoRA + quantized
   logging_steps: 10
-  max_seq_length: 256
-
+  max_seq_length: 512
+  weight_decay: 0.005 
+  loss_function: "custom"   # or "standard"
 
 # LoRA config (you can override these per model in CLI or a model-specific override file)
 lora_config:
   r: 8
   alpha: 16
-  target_modules: "all-linear"
+  target_modules: ["q_proj", "k_proj", "v_proj", "o_proj"]
   dropout: 0.05

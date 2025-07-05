@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModelForSequenceClassification
 from peft import PeftModel
 from transformers.utils.quantization_config import BitsAndBytesConfig
 from huggingface_hub import login
@@ -13,11 +13,22 @@ class BaseInference(ABC):
     Loads the tokenizer, base model, and LoRA adapter.
     """
 
-    def __init__(self, base_model_name: str, adapter_dir: str, prompt_formatter):
+    def __init__(
+            self, 
+            base_model_name: str, 
+            adapter_dir: str, 
+            prompt_formatter,
+            model_type: str,
+            hf_token: str = None,
+            label2id: dict = None,
+            id2label: dict = None
+        ):
         self.prompt_formatter = prompt_formatter
-        self.hf_token = os.environ.get("HF_TOKEN", None)
+        self.model_type = model_type
+        self.label2id = label2id
+        self.id2label = id2label
+        self.hf_token = hf_token
 
-        # Hugging Face auth (optional)
         if self.hf_token:
             login(token=self.hf_token)
 
@@ -44,16 +55,31 @@ class BaseInference(ABC):
             bnb_4bit_use_double_quant=True
         )
 
-        base_model = AutoModelForCausalLM.from_pretrained(
-            base_model_name,
-            device_map="auto",
-            trust_remote_code=True,
-            torch_dtype=torch.float16,
-            quantization_config=bnb_config
-        )
+        if self.model_type == "casual":
+            base_model = AutoModelForCausalLM.from_pretrained(
+                base_model_name,
+                device_map="auto",
+                trust_remote_code=True,
+                torch_dtype=torch.float16,
+                quantization_config=bnb_config
+            )
+        elif self.model_type == "classification":
+            base_model = AutoModelForSequenceClassification.from_pretrained(
+                base_model_name,
+                device_map="auto",
+                trust_remote_code=True,
+                torch_dtype=torch.float16,
+                quantization_config=bnb_config,
+                num_labels=len(self.label2id),
+                label2id=self.label2id,
+                id2label=self.id2label
+            )
+        else:
+            raise ValueError(f"Unsupported model_type: {self.model_type}")
 
         # Load adapter
         self.model = PeftModel.from_pretrained(base_model, adapter_dir)
+        self.model.config.pad_token_id = self.tokenizer.pad_token_id
         self.model.eval()
         print("[✓] LoRA adapter applied and model ready")
 

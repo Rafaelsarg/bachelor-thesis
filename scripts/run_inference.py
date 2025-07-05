@@ -1,7 +1,7 @@
 import sys
 import json
 import hydra
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 from datasets import load_from_disk
 from sklearn.metrics import classification_report
 
@@ -12,18 +12,21 @@ from finetuning.inference import GenericInference
 # Formatter imports
 from finetuning.formatters.llama_formatter import (
     LlamaSafetyPromptFormatterCasual,
-    LlamaTopicPromptFormatter,
+    LlamaTopicPromptFormatterCausal,
     LlamaSafetyPromptFormatterClassification,
+    LlamaTopicPromptFormatterClassification,
 )
 from finetuning.formatters.mistral_formatter import (
     MistralSafetyPromptFormatterCasual,
-    MistralTopicPromptFormatter,
+    MistralTopicPromptFormatterCausal,
     MistralSafetyPromptFormatterClassification,
+    MistralTopicPromptFormatterClassification,
 )
 from finetuning.formatters.phi_formatter import (
     PhiSafetyPromptFormatterCasual,
-    PhiTopicPromptFormatter,
+    PhiTopicPromptFormatterCasual,
     PhiSafetyPromptFormatterClassification,
+    PhiTopicPromptFormatterClassification,
 )
 
 # ─────────────────────────────────────────────
@@ -32,29 +35,32 @@ from finetuning.formatters.phi_formatter import (
 FORMATTER_REGISTRY = {
     "llama3": {
         "safety": {
-            "causal": LlamaSafetyPromptFormatterCasual,
+            "casual": LlamaSafetyPromptFormatterCasual,
             "classification": LlamaSafetyPromptFormatterClassification,
         },
         "cluster": {
-            "causal": LlamaTopicPromptFormatter,
+            "casual": LlamaTopicPromptFormatterCausal,
+            "classification": LlamaTopicPromptFormatterClassification,
         },
     },
     "mistral": {
         "safety": {
-            "causal": MistralSafetyPromptFormatterCasual,
+            "casual": MistralSafetyPromptFormatterCasual,
             "classification": MistralSafetyPromptFormatterClassification,
         },
         "cluster": {
-            "causal": MistralTopicPromptFormatter,
+            "casual": MistralTopicPromptFormatterCausal,
+            "classification": MistralTopicPromptFormatterClassification,
         },
     },
     "phi": {
         "safety": {
-            "causal": PhiSafetyPromptFormatterCasual,
+            "casual": PhiSafetyPromptFormatterCasual,
             "classification": PhiSafetyPromptFormatterClassification,
         },
         "cluster": {
-            "causal": PhiTopicPromptFormatter,
+            "casual": PhiTopicPromptFormatterCasual,
+            "classification": PhiTopicPromptFormatterClassification,
         },
     },
 }
@@ -67,7 +73,7 @@ def get_prompt_formatter(model_id: str, task: str, model_type: str):
 
 
 # ─────────────────────────────────────────────
-# 🚀 Inference Runner
+# Inference Runner
 # ─────────────────────────────────────────────
 @hydra.main(config_path="../config", config_name="inference_config", version_base=None)
 def main(cfg: DictConfig):
@@ -77,8 +83,22 @@ def main(cfg: DictConfig):
     # Select formatter based on model_id, task, and model_type
     formatter = get_prompt_formatter(cfg.model_id, cfg.task, cfg.model_type)
 
-    # Run inference
-    inference = GenericInference(base_model_name, cfg.adapter_dir, formatter)
+    # Load label mappings
+    label2id = OmegaConf.to_container(cfg.label2id_map[cfg.task], resolve=True)
+    id2label = {v: k for k, v in label2id.items()}
+
+    # Initialize inference engine
+    inference = GenericInference(
+        base_model_name=base_model_name,
+        adapter_dir=cfg.adapter_dir,
+        prompt_formatter=formatter,
+        model_type=cfg.model_type,
+        hf_token=cfg.hf_token,
+        label2id=label2id,
+        id2label=id2label
+    )
+
+    # Run predictions
     predictions, references = inference.predict_dataset(dataset)
 
     # Remap safety labels for readability

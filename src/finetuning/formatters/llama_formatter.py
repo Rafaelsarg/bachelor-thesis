@@ -112,17 +112,17 @@ Response: {response}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 # Llama Topic Prompt Formatter
 # ──────────────────────────────────────────────────────────────
 
-class LlamaTopicPromptFormatter(BasePromptFormatter):
+class LlamaTopicPromptFormatterCausal(BasePromptFormatter):
     def format_prompt_training(self, struggle, label):
         """
-        Format training prompt for topic classification from struggle text.
+        For Causal LM: Generate a prompt and return 'text', which will be both input and target.
 
         Args:
-            struggle (str): The patient struggle.
-            label (str): One of 12 possible topic classes.
+            struggle (str): The patient's struggle.
+            label (str): One of 12 topic classes.
 
         Returns:
-            dict: Prompt containing formatted classification task.
+            dict: {"text": prompt}
         """
         prompt = f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 Categorize the patient's struggle into **one** of the following categories:
@@ -135,20 +135,46 @@ Classification: {label}<|eot_id|>"""
         return {"text": prompt}
 
     def format_prompt_inference(self, struggle):
-        """
-        Format inference prompt for topic classification.
-
-        Args:
-            struggle (str): The patient struggle.
-
-        Returns:
-            str: Formatted string prompt for topic classification.
-        """
-        prompt = f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+        return f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 Categorize the patient's struggle into **one** of the following categories:
 "DIET_PLAN_ISSUES", "SOCIAL", "SITUATIONAL", "MOTIVATION", "EMOTIONS", "CRAVING_HABIT", "MENTAL_HEALTH",
 "ENERGY_EFFORT_CONVENIENCE", "PORTION_CONTROL", "KNOWLEDGE", "HEALTH_CONDITION", "NOT_APPLICABLE".<|eot_id|>
 <|start_header_id|>user<|end_header_id|>
 Struggle: {struggle}<|eot_id|>
 <|start_header_id|>assistant<|end_header_id|>"""
-        return prompt
+
+# ──────────────────────────────────────────────────────────────
+# Llama Topic Prompt Formatter
+# ──────────────────────────────────────────────────────────────
+
+class LlamaTopicPromptFormatterClassification(BasePromptFormatter):
+    def format_prompt_training(self, struggle, label):
+        """
+        For Sequence Classification: Return 'text' and numeric 'label'.
+
+        Args:
+            struggle (str): The struggle text.
+            label (str): String label (e.g., "SOCIAL").
+
+        Returns:
+            dict: {"text": prompt, "labels": int}
+        """
+        prompt = f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+Categorize the patient's struggle into **one** of the following categories:
+"DIET_PLAN_ISSUES", "SOCIAL", "SITUATIONAL", "MOTIVATION", "EMOTIONS", "CRAVING_HABIT", "MENTAL_HEALTH",
+"ENERGY_EFFORT_CONVENIENCE", "PORTION_CONTROL", "KNOWLEDGE", "HEALTH_CONDITION", "NOT_APPLICABLE".<|eot_id|>
+<|start_header_id|>user<|end_header_id|>
+Struggle: {struggle}<|eot_id|>"""
+
+        return {
+            "text": prompt,
+            "label": label
+        }
+
+    def format_prompt_inference(self, struggle):
+        return f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+Categorize the patient's struggle into **one** of the following categories:
+"DIET_PLAN_ISSUES", "SOCIAL", "SITUATIONAL", "MOTIVATION", "EMOTIONS", "CRAVING_HABIT", "MENTAL_HEALTH",
+"ENERGY_EFFORT_CONVENIENCE", "PORTION_CONTROL", "KNOWLEDGE", "HEALTH_CONDITION", "NOT_APPLICABLE".<|eot_id|>
+<|start_header_id|>user<|end_header_id|>
+Struggle: {struggle}<|eot_id|>"""
