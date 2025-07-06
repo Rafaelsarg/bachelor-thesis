@@ -50,26 +50,12 @@ FORMATTER_REGISTRY = {
 }
 
 def save_full_config(cfg, output_dir: str):
-    os.makedirs(output_dir, exist_ok=True)
     config_dir = os.path.join(output_dir, "config")
     os.makedirs(config_dir, exist_ok=True)
 
-    # Save the full config as one file
-    with open(os.path.join(config_dir, "full_config.json"), "w") as f:
+    config_path = os.path.join(config_dir, "full_config.json")
+    with open(config_path, "w") as f:
         json.dump(OmegaConf.to_container(cfg, resolve=True), f, indent=2)
-
-    # Optionally split and save specific parts
-    if "sft_config" in cfg and "sft_cfg" in cfg.sft_config:
-        with open(os.path.join(config_dir, "sft_config.json"), "w") as f:
-            json.dump(OmegaConf.to_container(cfg.sft_config.sft_cfg, resolve=True), f, indent=2)
-
-    if "lora_config" in cfg:
-        with open(os.path.join(config_dir, "lora_config.json"), "w") as f:
-            json.dump(OmegaConf.to_container(cfg.lora_config, resolve=True), f, indent=2)
-
-    if "dataset_config" in cfg:
-        with open(os.path.join(config_dir, "dataset_config.json"), "w") as f:
-            json.dump(OmegaConf.to_container(cfg.dataset_config, resolve=True), f, indent=2)
                       
 @hydra.main(config_path="../config", config_name="finetune_config", version_base=None)
 def main(cfg: DictConfig):
@@ -86,6 +72,9 @@ def main(cfg: DictConfig):
             f"Available: {list(FORMATTER_REGISTRY.get(model_id, {}).keys())}"
         )
 
+    # Save the full config to output directory
+    save_full_config(cfg, cfg.output_dir)
+
     formatter = formatter_class()
 
     trainer = GenericTrainer(
@@ -96,7 +85,6 @@ def main(cfg: DictConfig):
     )
 
     trainer.train()
-    save_full_config(cfg, cfg.output_dir)
 
 if __name__ == "__main__":
     main()

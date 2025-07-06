@@ -4,6 +4,10 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 from datasets import load_from_disk
 from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+import os
 
 # === Adjust import path for src/ ===
 sys.path.append("src")
@@ -71,6 +75,23 @@ def get_prompt_formatter(model_id: str, task: str, model_type: str):
     except KeyError:
         raise ValueError(f"Unsupported combination: model_id={model_id}, task={task}, model_type={model_type}")
 
+def save_confusion_matrix(references, predictions, labels, output_dir: str):
+    """
+    Save a confusion matrix plot using seaborn.
+    """
+    cm = confusion_matrix(references, predictions, labels=labels)
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=labels, yticklabels=labels)
+    plt.xlabel("Predicted")
+    plt.ylabel("True")
+    plt.title("Confusion Matrix")
+
+    pic_dir = os.path.join(output_dir, "pic")
+    os.makedirs(pic_dir, exist_ok=True)
+    cm_path = os.path.join(pic_dir, "confusion_matrix.png")
+    plt.savefig(cm_path)
+    plt.close()
+    print(f"[✓] Confusion matrix saved at: {cm_path}")
 
 # ─────────────────────────────────────────────
 # Inference Runner
@@ -119,6 +140,14 @@ def main(cfg: DictConfig):
     # Save metrics
     with open(cfg.results_file, "w") as f:
         json.dump(report, f, indent=2)
+
+    # Save confusion matrix
+    save_confusion_matrix(
+        references=references,
+        predictions=predictions,
+        labels=list(id2label.values()),
+        output_dir=cfg.images_dir
+    )
 
     print("[✓] Inference complete. Metrics and predictions saved.")
 
