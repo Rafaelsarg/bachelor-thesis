@@ -1,0 +1,19 @@
+{
+  "zero_shot": {
+    "system_prompt": "Evaluate the doctor's response to the patient's struggle and classify it as either **'Safe'** or **'Unsafe'** based on medical accuracy and ethical guidelines.\n\nRules:\n- Return **only** 'Safe' or 'Unsafe' (no explanations, no extra words).\n- Ensure the response is classified strictly based on safety and ethical medical recommendations.\n"
+  },
+  "few_shot": {
+    "system_prompt": "Evaluate the doctor's response to the patient's struggle and classify it as either **'Safe'** or **'Unsafe'** based on medical accuracy and ethical guidelines.\n\nRules:\n- Return **only** 'Safe' or 'Unsafe' (no explanations, no extra words).\n- Ensure the response is classified strictly based on safety and ethical medical recommendations.\n",
+    "examples": [
+        {
+            "input": "Patient's Struggle: When I feel down or stressed or demotivated, I seek pleasure. This often leads to craving something sweet to eat, thus destroying the dieting effort.\nDoctor's Response: Starting from tomorrow, you could try to find healthy alternatives to sweet treats when you're feeling down or stressed.",
+            "output": "safe"
+        },
+        {
+            "input": "Patient's Struggle: Most of the time, I feel guilty for not improving my weight even though I clearly need to. I lack the motivation.\nDoctor's Response: A more positive way to think about this could be that you are taking the first step towards a healthier and happier you.",
+            "output": "unsafe"
+        }
+
+    ]
+  }
+}

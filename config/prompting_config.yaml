@@ -1,0 +1,40 @@
+model: "llama"
+task: "cluster"
+prompt: "few_shot"
+
+dataset_config:
+  dataset_map:
+    safety: "data/processed/safety-dataset-90-5-5.hf"
+    cluster: "data/processed/cluster-dataset-70-25-5.hf"
+  dataset_path: "${dataset_config.dataset_map[${task}]}"
+
+ollama_models:
+  llama: "llama3.1:8b"
+  mistral: "mistral:7b"
+  phi: "phi3:mini"
+
+ollama_model: "${ollama_models[${model}]}"
+
+prompts_path:
+  safety: "src/prompting/prompts/safety_prompts.json"
+  cluster: "src/prompting/prompts/cluster_prompts.json"
+
+output_directory:
+  safety: "results/safety/${prompt}/${model}"
+  cluster: "results/cluster/${prompt}/${model}"
+
+label_names:
+  safety: ["Unsafe", "Safe"]
+  cluster: 
+    - "DIET_PLAN_ISSUES"
+    - "SOCIAL"
+    - "SITUATIONAL"
+    - "MOTIVATION"
+    - "EMOTIONS"
+    - "CRAVING_HABIT"
+    - "MENTAL_HEALTH"
+    - "ENERGY_EFFORT_CONVENIENCE"
+    - "PORTION_CONTROL"
+    - "KNOWLEDGE"
+    - "HEALTH_CONDITION"
+    - "NOT_APPLICABLE"

@@ -1,0 +1,45 @@
+{
+  "zero_shot": {
+    "system_prompt": "Categorize the patient's struggle enclosed in square brackets into **one** of the following categories:\n\"DIET_PLAN_ISSUES\", \"SOCIAL\", \"SITUATIONAL\", \"MOTIVATION\", \"EMOTIONS\", \"CRAVING_HABIT\", \"MENTAL_HEALTH\",\n\"ENERGY_EFFORT_CONVENIENCE\", \"PORTION_CONTROL\", \"KNOWLEDGE\", \"HEALTH_CONDITION\", \"NOT_APPLICABLE\".\n\nRules:\n- Return **only the category name** (no explanations, no extra words).\n- Ensure the response is exactly **one** of the predefined categories.\n"
+  },
+  "few_shot": {
+      "system_prompt": "Categorize the patient's struggle enclosed in square brackets into **one** of the following categories:\n\"DIET_PLAN_ISSUES\", \"SOCIAL\", \"SITUATIONAL\", \"MOTIVATION\", \"EMOTIONS\", \"CRAVING_HABIT\", \"MENTAL_HEALTH\",\n\"ENERGY_EFFORT_CONVENIENCE\", \"PORTION_CONTROL\", \"KNOWLEDGE\", \"HEALTH_CONDITION\", \"NOT_APPLICABLE\".\n\nRules:\n- Return **only the category name** (no explanations, no extra words).\n- Ensure the response is exactly **one** of the predefined categories.\n",
+      "few_shot_examples": [
+          {
+              "input": "[I had irregular bowel movements because of my diet. Sometimes I had to eat outside my diet just so i could relieve myself.]",
+              "output": "DIET_PLAN_ISSUES"
+          },
+          {
+              "input": "[I remember going out was a big problem because I would feel like I am forcing other people to respect the diet with me. If my friends chose a restaurant that served food I didn't want to eat, I could just ignore it and eat anyway or don't go out at all. Both of these option seemed unattractive.]",
+              "output": "SOCIAL"
+          },
+          {
+              "input": "[My schedule is often very busy, so I don't have time to cook as much as I would like, hence I end up eating fast foods.]",
+              "output": "SITUATIONAL"
+          }
+      ]
+  },
+  "custom": {
+    "system_prompt": "Select the most appropriate category for the patient’s struggle enclosed in square brackets.\n\nInstructions:\n- Choose only one category from the list provided below.\n- Return only the category name. No explanations, no extra text.\n- The response must exactly match one of the options.",
+    "definitions": {
+    "CRAVING_HABIT": "Unhealthy eating habits; cravings for unhealthy food",
+    "EMOTIONS": "Unhealthy choices driven by feelings",
+    "MENTAL_HEALTH": "Struggles attributable to mental health",
+    "MOTIVATION": "Lack of motivation",
+    "ENERGY_EFFORT_CONVENIENCE": "Eating unhealthy out of convenience",
+    "KNOWLEDGE": "Lifestyle impacted by low nutrition/exercise literacy",
+    "SOCIAL": "Social pressure (e.g. eating out with others)",
+    "DIET_PLAN_ISSUES": "Issues with specific, unsustainable, or extreme diet/workout",
+    "NOT_APPLICABLE": "Not enough info or irrelevant text",
+    "PORTION_CONTROL": "Irregular eating patterns or portion misjudgment",
+    "SITUATIONAL": "External factors beyond willpower",
+    "HEALTH_CONDITION": "Healthy lifestyle affected by medical conditions"
+  },
+  "groups": [
+    ["CRAVING_HABIT", "EMOTIONS", "MENTAL_HEALTH"],
+    ["MOTIVATION", "ENERGY_EFFORT_CONVENIENCE", "KNOWLEDGE"],
+    ["SOCIAL", "DIET_PLAN_ISSUES", "PORTION_CONTROL"],
+    ["SITUATIONAL", "HEALTH_CONDITION", "NOT_APPLICABLE"]
+  ]
+  }
+}
