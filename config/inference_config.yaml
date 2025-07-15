@@ -7,7 +7,7 @@ model_id: "llama3"                 # "llama3", "mistral", or "phi"
 model_type: "classification"       # "classification" or "causal"
 
 # This must match the name of the fine-tuned run (check your output_dir from training)
-run_name: "llama3-cluster-classification-lr1e-05-bs8-20250705_161928"
+run_name: "llama3-cluster-classification-lr2e-05-bs16-20250715_182741"
 
 # Hugging Face Token (insert your own if needed)
 hf_token: "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"
@@ -48,3 +48,4 @@ dataset_path: "${dataset_map[${task}]}"
 adapter_dir: "results/finetuning/${model_id}/${task}/${run_name}/model"
 output_file: "results/finetuning/${model_id}/${task}/${run_name}/predictions.json"
 results_file: "results/finetuning/${model_id}/${task}/${run_name}/results.json"
+images_dir: "results/finetuning/${model_id}/${task}/${run_name}/images"
