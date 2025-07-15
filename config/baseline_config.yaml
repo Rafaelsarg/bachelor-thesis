@@ -1,11 +1,9 @@
-task: "cluster"
-dataset_map:
-  safety: "data/processed/safety-dataset-90-5-5.hf"
-  cluster: "data/processed/cluster-dataset-70-25-5.hf"
-dataset_path: "${dataset_map[${task}]}"
-
+# =============================
+#   USER-EDITABLE PARAMETERS
+# =============================
+task: "cluster"                            # Choices: "safety" or "cluster"
 vectorizer:
-  type: "word2vec"  # "bow", "tfidf", "word2vec", or "sentence_bert"
+  type: "word2vec"              # Choices: "bow", "tfidf", "word2vec" or "sentence_bert"
   grid_params:
     max_features: [5000, 10000]
     min_df: [1, 5]
@@ -14,7 +12,7 @@ vectorizer:
       - [1, 2]
 
 classifier:
-  type: "lr"
+  type: "lr"                    # Choices: "lr", "nb", "svm", or "rf"
   grid_params:
     lr:
       C: [0.01, 0.1, 1]
@@ -32,6 +30,14 @@ classifier:
       n_estimators: [100]
       max_depth: [10, 20]
       min_samples_split: [2, 5]
+
+# =============================
+#   DO NOT CHANGE BELOW
+# =============================
+dataset_map:
+  safety: "data/processed/safety-dataset-90-5-5.hf"
+  cluster: "data/processed/cluster-dataset-70-25-5.hf"
+dataset_path: "${dataset_map[${task}]}"
 
 word2vec_path: data/GoogleNews-vectors-negative300.bin
 sentence_bert_model: sentence-transformers/all-MiniLM-L6-v2

@@ -1,22 +1,52 @@
-# General metadata
-project_name: "Thesis - Safety Classification"
-run_name: "${model_id}-${task}-${model_type}-lr${sft_config.lr}-bs${sft_config.batch_size}-${now:%Y%m%d_%H%M%S}"
-group: "${task}"                 # safety, cluster
-tags: ["${model_id}", "${task}", "qlora", "lora"]
-task: "cluster"
+# =============================
+# 🔧 USER-EDITABLE PARAMETERS
+# =============================
+
+project_name: "Thesis - Safety Classification" # WanDB project name
+
+task: "cluster"                    # Choose "safety" or "cluster"
+model_id: "llama3"                # Choose from: "llama3", "phi", "mistral"
+model_type: "classification"      # "classification" or "causal"
+
+
+# Training hyperparameters (can be tuned)
+sft_config:
+  batch_size: 16               
+  epochs: 10              
+  lr: 2e-5                  
+  evaluation_strategy: "epoch"
+  gradient_accumulation_steps: 2  
+  max_grad_norm: 0.3        
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.05
+  optim: "paged_adamw_32bit"  
+  logging_steps: 10
+  max_seq_length: 512
+  weight_decay: 0.005
+  loss_function: "custom"   # Choices: "standard", "custom" (If model type is causal, then loss_function is not applied")
+
+# LoRA adapter setup
+lora_config:
+  r: 8
+  alpha: 16
+  target_modules: "all-linear" # Can be specific layer ["q_proj", "k_proj", "v_proj", "o_proj"]
+  dropout: 0.05
+
+# Hugging Face Token (insert your own if needed)
 hf_token: "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"
 
-# Model selector (choose in CLI)
-model_id: "llama3"  # or "llama3", "phi"
+# =============================
+# ⚙️  INTERNAL CONFIG (NO CHANGE NEEDED)
+# =============================
 
-# Model names per LLM
+run_name: "${model_id}-${task}-${model_type}-lr${sft_config.lr}-bs${sft_config.batch_size}-${now:%Y%m%d_%H%M%S}"
+group: "${task}"
+tags: ["${model_id}", "${task}", "qlora", "lora"]
+
 model_map:
   mistral: "mistralai/Mistral-7B-Instruct-v0.2"
   llama3: "meta-llama/Meta-Llama-3-8B-Instruct"
   phi: "microsoft/Phi-3-mini-4k-instruct"
-
-# Model Type
-model_type: "classification"  # or "casual"
 
 dataset_config:
   dataset_map:
@@ -65,27 +95,3 @@ dataset_config:
   label_names: ${dataset_config.label_names_map[${task}]}
 
 output_dir: "results/finetuning/${model_id}/${task}/${run_name}"
-
-# SFT config
-sft_config:
-  sft_cfg:
-  batch_size: 16               
-  epochs: 10              
-  lr: 2e-5                  
-  evaluation_strategy: "epoch"
-  gradient_accumulation_steps: 2  
-  max_grad_norm: 0.3        
-  lr_scheduler_type: "cosine"
-  warmup_ratio: 0.05
-  optim: "paged_adamw_32bit"  
-  logging_steps: 10
-  max_seq_length: 512
-  weight_decay: 0.005 
-  loss_function: "custom"   
-
-# LoRA config (you can override these per model in CLI or a model-specific override file)
-lora_config:
-  r: 8
-  alpha: 16
-  target_modules: ["q_proj", "k_proj", "v_proj", "o_proj"]
-  dropout: 0.05

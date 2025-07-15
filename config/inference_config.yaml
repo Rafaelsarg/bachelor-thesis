@@ -1,11 +1,21 @@
-# ───────────── Task and Model Metadata ─────────────
+# =============================
+#  USER-EDITABLE PARAMETERS
+# =============================
+
 task: "cluster"                     # "safety" or "cluster"
-model_id: "llama3"                # "llama3", "mistral", or "phi"
+model_id: "llama3"                 # "llama3", "mistral", or "phi"
 model_type: "classification"       # "classification" or "causal"
 
+# This must match the name of the fine-tuned run (check your output_dir from training)
 run_name: "llama3-cluster-classification-lr1e-05-bs8-20250705_161928"
 
-# ───────────── Model & Dataset Mapping ─────────────
+# Hugging Face Token (insert your own if needed)
+hf_token: "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"
+
+# =============================
+#  INTERNAL CONFIG (NO CHANGE NEEDED)
+# =============================
+
 model_map:
   mistral: "mistralai/Mistral-7B-Instruct-v0.2"
   llama3: "meta-llama/Meta-Llama-3-8B-Instruct"
@@ -15,7 +25,6 @@ dataset_map:
   safety: "data/processed/safety-dataset-90-5-5.hf"
   cluster: "data/processed/cluster-dataset-70-25-5.hf"
 
-# ───────────── Label Mappings ─────────────
 label2id_map:
   safety:
     Unsafe: 0
@@ -34,11 +43,8 @@ label2id_map:
     HEALTH_CONDITION: 10
     NOT_APPLICABLE: 11
 
-# ───────────── Resolved Paths ─────────────
+# Auto-resolved paths (based on task, model, and run_name)
 dataset_path: "${dataset_map[${task}]}"         
 adapter_dir: "results/finetuning/${model_id}/${task}/${run_name}/model"
 output_file: "results/finetuning/${model_id}/${task}/${run_name}/predictions.json"
 results_file: "results/finetuning/${model_id}/${task}/${run_name}/results.json"
-
-# ───────────── Hugging Face Token ─────────────
-hf_token: "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"

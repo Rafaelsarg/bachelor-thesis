@@ -1,6 +1,14 @@
-model: "llama"
-task: "cluster"
-prompt: "few_shot"
+# =============================
+#  USER-EDITABLE PARAMETERS
+# =============================
+
+model: "llama"                     # Choices: "llama", "mistral", or "phi"
+task: "cluster"                    # Choices: "safety" or "cluster"
+prompt: "few_shot"                 # Choices: "zero_shot", "few_shot", or "custom" (custom only for cluster)
+
+# =============================
+#  DO NOT CHANGE BELOW
+# =============================
 
 dataset_config:
   dataset_map:
