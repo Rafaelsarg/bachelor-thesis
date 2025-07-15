@@ -69,19 +69,19 @@ output_dir: "results/finetuning/${model_id}/${task}/${run_name}"
 # SFT config
 sft_config:
   sft_cfg:
-  batch_size: 16               # ↑ increased to reduce update noise (if memory allows)
-  epochs: 10              # ↑ more training time to learn minority classes
-  lr: 2e-5                    # ↓ slightly lower LR for more stable convergence
+  batch_size: 16               
+  epochs: 10              
+  lr: 2e-5                  
   evaluation_strategy: "epoch"
-  gradient_accumulation_steps: 2  # recompute if you increase batch size
+  gradient_accumulation_steps: 2  
   max_grad_norm: 0.3        
   lr_scheduler_type: "cosine"
   warmup_ratio: 0.05
-  optim: "paged_adamw_32bit"  # 🚀 more efficient for LoRA + quantized
+  optim: "paged_adamw_32bit"  
   logging_steps: 10
   max_seq_length: 512
   weight_decay: 0.005 
-  loss_function: "custom"   # or "standard"
+  loss_function: "custom"   
 
 # LoRA config (you can override these per model in CLI or a model-specific override file)
 lora_config:
