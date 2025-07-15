@@ -10,6 +10,7 @@ This repository contains the codebase developed for thesis experiments involving
 - [Prerequisites](#prerequisites)
 - [Project Structure](#project-structure)
 - [Setup and Installation](#setup-and-installation)
+- [Running the Main Scripts](#running-the-main-scripts)
 - [Running Baseline Models](#running-baseline-models)
 - [Prompting with Ollama](#prompting-with-ollama)
 - [Fine-Tuning LLMs](#fine-tuning-llms)
@@ -19,7 +20,7 @@ This repository contains the codebase developed for thesis experiments involving
 
 ---
 
-### Prerequisites
+## Prerequisites
 
 To run the codebase successfully, ensure that the following software and accounts are available and properly configured:
 
@@ -58,7 +59,7 @@ To run the codebase successfully, ensure that the following software and account
 
 ---
 
-### Project Structure
+## Project Structure
 
 Below is an overview of the main folders and their roles:
 
@@ -90,11 +91,11 @@ Each module and script is designed to be self-contained and reusable. The Hydra 
 
 ---
 
-### Setup and Installation
+## Setup and Installation
 
 Follow these steps to set up the environment and install all necessary dependencies:
 
-#### 1. Clone the Repository
+### 1. Clone the Repository
 
 Repository link:
 ```
@@ -106,7 +107,7 @@ git clone <repository-url>
 cd bachelor-thesis
 ```
 
-#### 2. Create a Virtual Environment
+### 2. Create a Virtual Environment
 
 **Using venv (recommended):**
 ```bash
@@ -116,7 +117,7 @@ source venv/bin/activate  # On Linux/macOS
 venv\Scripts\activate     # On Windows
 ```
 
-#### 3. Install Dependencies
+### 3. Install Dependencies
 
 Install all required packages from the requirements file:
 
@@ -126,71 +127,152 @@ pip install -r requirements.txt
 
 **Note:** The installation may take several minutes due to the large number of dependencies, particularly PyTorch and CUDA-related packages.
 
+### 4. Download Pre-trained Word2Vec Embeddings (Optional)
 
-#### Task-Specific Setup
+Required only for using the `word2vec` vectorizer in baseline models.
 
-The codebase supports three main types of experiments. Follow the setup instructions for the tasks you plan to run:
+- File: `GoogleNews-vectors-negative300.bin.gz` (~1.5 GB)  
+- Download from: https://www.kaggle.com/datasets/adarshsng/googlenewsvectors
 
-##### A. Baseline Classification Setup
+**Instructions:**
+- Extract the file to obtain `GoogleNews-vectors-negative300.bin`
+- Move it to the `data/` directory (or adjust the config path accordingly)
 
-**Required for:** Traditional ML classification experiments
+### 5. Install and Start Ollama (Optional)
 
-Download Pre-trained Word2Vec Embeddings
-
-To use the **Word2Vec** feature extraction option in the baseline classifiers, you need to download the pre-trained **Google News Word2Vec** embeddings:
-
-- **File**: `GoogleNews-vectors-negative300.bin.gz` (~1.5GB)
-- **Download link**: [GoogleNews-vectors-negative300.bin.gz](https://www.kaggle.com/datasets/adarshsng/googlenewsvectors)
-
-#### Instructions:
-
-1. Download the `.bin` file using the link above.
-2. Move the file to data folder
-
-
-##### B. Fine-tuning Setup
-
-**Required for:** Fine-tuning large language models
-
-
-**Model Access:**
-- **Mistral models:** Available with Hugging Face token
-- **Phi models:** Available with Hugging Face token  
-- **LLaMA models:** Request access from Meta via [Hugging Face](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct)
-
-**Configuration:**
-- Review `config/finetune_config.yaml` for training parameters
-- Adjust batch sizes based on your GPU memory
-- Set up model paths and dataset configurations
-
-##### C. Prompting Setup
-
-**Required for:** Zero-shot and few-shot prompting experiments
+Ollama is required only for running prompting tasks.
 
 **Install Ollama:**
+- macOS/Linux:  
 ```bash
-# macOS/Linux
-curl -fsSL https://ollama.ai/install.sh | sh
-
-# Windows: Download from https://ollama.com/
+  curl -fsSL https://ollama.ai/install.sh | sh  
 ```
-
-**Start Ollama service:**
-```bash
-ollama serve
-```
-
-**Configuration:**
-- Review `config/prompting_config.yaml` for model and prompt settings
-
+- Windows:  
+  Download the installer from https://ollama.com/
 
 ---
 
-### Running Baseline Models
+## Running the Main Scripts
+
+This project includes three main workflows: running traditional ML baselines, prompting local LLMs via Ollama, and fine-tuning models with PEFT followed by inference.
+
+
+### 1. Baselines
+
+**Entry Point**: `scripts/run_baseline.py`  
+**Main Source Code**: `src/baselines/classification.py`
+
+This script runs traditional ML pipelines using vectorizers like BoW, TF-IDF, Word2Vec, or Sentence-BERT with classifiers such as Logistic Regression, Naive Bayes, SVM, or Random Forest.
+
+
+You can run any baseline experiment without modifying a YAML file by specifying all configuration values in command line.
+
+```bash
+python scripts/run_baseline.py task=cluster vectorizer.type=word2vec classifier.type=lr
+```
+or even change hyperparameters
+
+```bash
+python scripts/run_baseline.py \
+  task=cluster \
+  vectorizer.type=tfidf \
+  vectorizer.grid_params.max_features=10000 \
+  vectorizer.grid_params.min_df=1 \
+  vectorizer.grid_params.ngram_range="[(1,2)]" \
+  classifier.type=svm \
+  classifier.grid_params.svm.C=1 \
+  classifier.grid_params.svm.kernel=linear \
+```
+
+While it's possible to override any configuration directly from the command line, the commands can quickly become long and hard to manage if a lot of parameters needs to be changed. So, for major updates such as changing the classifier or vectorizer parameters, or modifying grid search settings, it's much more convenient to open the existing YAML configuration file and update it manually.
+
+**YAML config file**:  `config/baseline_config.yaml`
+
+Once updated, you can run the script without needing any command-line overrides:
+
+```bash
+python scripts/run_baseline.py
+```
+
+For details on configuration, see [Baseline Configuration Explained](#-baseline-configuration-explained)
+
+
+### 2. Prompting
+
+**Entry Point**: `scripts/run_prompting.py`  
+**Main Source Code**: `src/prompting/ollama_prompting.py`
+**Prompts JSON**: `src/prompting/prompts/`
+
+This script runs zero-shot, few-shot, or custom prompting experiments.
+
+Before running an experiment, make sure to open a terminal and start the Ollama service by running:
+
+```bash
+ollama serve
+```
+**Examples:**
+
+```bash
+python scripts/run_prompting.py model=llama task=cluster prompt=few_shot
+```
+
+```bash
+python scripts/run_prompting.py model=llama task=cluster prompt=custom
+```
+
+```bash
+python scripts/run_prompting.py model=llama task=safety prompt=few_shot
+```
+> **Note:** prompt=custom can be used only when the task=cluster
+
+For details on prompt formatting and task-specific setup, see [Prompting Configuration Explained](#prompting-configuration-explained)
+
+**📂 Output Format**
+
+Results are saved to  
+`results/{task}/{prompt}/{model}/`
+
+Files you will find there:
+
+- `metrics.json` – accuracy, precision, recall, F1 (overall & per‑class)  
+- `conf_matrix.png` – confusion‑matrix heatmap  
+- `predictions.json` – list of inputs with the model’s raw output and final label
+
+**Example:**
+
+`results/cluster/few_shot/llama/llama_few_shot_confusion_matrix.png`
+`results/cluster/few_shot/llama/llama_few_shot_metrics.json`
+`results/cluster/few_shot/llama/llama_few_shot.json`
+
+### 3. Fine-Tuning and Inference
+
+**Fine-Tuning Script**: `scripts/run_finetuning.py`  
+Fine-tunes an instruction-tuned model like LLaMA 3 or Mistral using QLoRA and Hugging Face PEFT.
+
+**Example:**
+
+```bash
+python scripts/run_finetuning.py model_id=llama3 task=cluster model_type=classification
+```
+
+**Inference Script**: `scripts/run_inference.py`  
+Runs prediction and evaluation using the saved adapter weights from a previous fine-tuning run.
+
+**Example:**
+
+```bash
+python scripts/run_inference.py task=cluster model_id=llama3 run_name=llama3-cluster-classification-lr2e-05-bs16-20250706_214753
+```
+
+> 🔧 For details on both, see:  
+> [Fine-Tuning Configuration Explained](#️fine-tuning-configuration-explained)  
+> [Inference Configuration Explained](#️inference-configuration-explained)
+
+---
+
+## Baseline Configuration Explained
 
 The configuration file defines all parameters needed to run baseline classification experiments using traditional machine learning models and various feature extraction techniques.
-
-#### 🔢 Task and Dataset
 
 ```yaml
 task: "cluster"
@@ -200,13 +282,11 @@ dataset_map:
 dataset_path: "${dataset_map[${task}]}"
 ```
 
-- **`task`**: Specifies the task type. Options: `"safety"` or `"cluster"`.
+- **`task`**: Specifies the task type. Options: `"safety"` or `"cluster"`. 
 - **`dataset_map`**: Maps each task name to a corresponding dataset path.
 - **`dataset_path`**: Dynamically resolves to the correct dataset path using the value of `task`. For example, if `task: cluster`, then `dataset_path` becomes `data/processed/cluster-dataset-70-25-5.hf`.
 
----
-
-#### 🧠 Vectorizer Settings
+#### Vectorizer Settings
 
 ```yaml
 vectorizer:
@@ -230,9 +310,7 @@ vectorizer:
   - `min_df`: Minimum number of documents a word must appear in to be included.
   - `ngram_range`: Range of n-grams to consider (e.g., `[1, 2]` includes unigrams and bigrams).
 
----
-
-#### 🤖 Classifier Settings
+#### Classifier Settings
 
 ```yaml
 classifier:
@@ -286,9 +364,8 @@ classifier:
     - `max_depth`: Maximum depth of each tree. Prevents overfitting.
     - `min_samples_split`: Minimum number of samples required to split a node.
 
----
 
-#### 📦 Embedding and Model Paths
+#### Embedding and Model Paths
 
 ```yaml
 word2vec_path: data/GoogleNews-vectors-negative300.bin
@@ -303,72 +380,7 @@ sentence_bert_model: sentence-transformers/all-MiniLM-L6-v2
 
 ---
 
-#### 📁 Results Directory
-
-```yaml
-results_dir: results/baselines/${task}/${classifier.type}/${vectorizer.type}
-```
-
-**Typical contents of the results directory:**
-
-- **`classification_report.json`**  
-  Contains detailed evaluation metrics including:
-  - Precision
-  - Recall
-  - F1-score
-  - Accuracy  
-  Metrics are provided per class, along with macro and weighted averages.
-
-- **`best_params.json`**  
-  Stores the best hyperparameters selected by `GridSearchCV` during model training. Useful for reproducibility and future tuning.
-
-- **`confusion_matrix.png`**  
-  An optional heatmap visualizing the model's prediction performance across true and predicted classes. Helps in identifying common misclassifications.
-
----
-
-### ▶️ How to Run Baselines
-
-Baseline experiments can be launched directly from the command line using Hydra configuration overrides.
-
-#### 1. Run with Command-Line Overrides
-
-You can run any baseline experiment without modifying a YAML file by specifying all configuration values inline.
-
-```bash
-python scripts/run_baseline.py task=cluster vectorizer.type=word2vec classifier.type=lr
-```
-or 
-
-```bash
-python scripts/run_baseline.py \
-  task=cluster \
-  vectorizer.type=tfidf \
-  vectorizer.grid_params.max_features=10000 \
-  vectorizer.grid_params.min_df=1 \
-  vectorizer.grid_params.ngram_range="[(1,2)]" \
-  classifier.type=svm \
-  classifier.grid_params.svm.C=1 \
-  classifier.grid_params.svm.kernel=linear \
-```
-
-While it's possible to override any configuration directly from the command line, the commands can quickly become long and hard to manage.
-
----
-
-#### ✅ Recommended: Edit the YAML File Directly
-
-For major updates—such as changing the classifier or vectorizer parameters, or modifying grid search settings—it's much more convenient to open the existing YAML configuration file and update it manually.
-
-Once updated, you can run the script without needing any command-line overrides:
-
-```bash
-python scripts/run_baseline.py
-```
-
----
-
-### Prompting with Ollama
+### Prompting Configuration Explained
 
 This configuration defines how to run zero-shot, few-shot, or custom prompting tasks using locally hosted models via **Ollama**. It supports both the **safety** and **cluster** classification tasks.
 
@@ -415,7 +427,7 @@ label_names:
     - "NOT_APPLICABLE"
 ```
 
-#### 🔧 `model`
+####  `model`
 
 Specifies which model to use for prompting. Options:
 - `llama`: Meta LLaMA 3.1 8B
@@ -424,7 +436,7 @@ Specifies which model to use for prompting. Options:
 
 The actual model string is resolved using the `ollama_models` mapping.
 
-#### 🗂 `task`
+#### `task`
 
 Defines the classification task to run. Options:
 - `safety`: Classifies AI responses as "Safe" or "Unsafe"
@@ -432,18 +444,16 @@ Defines the classification task to run. Options:
 
 This value is used to load the appropriate dataset, prompt file, and output path.
 
-#### 💬 `prompt`
+#### `prompt`
 
 Selects the prompting strategy. Options:
 - `zero_shot`
 - `few_shot`
 - `custom`
 
-Each prompt type changes how the model is guided during inference (e.g., examples included or not).
+Each prompt type changes how the model is guided during inference (e.g., examples included or not). Important to note that **custom** prompting works only with **cluster classification**.
 
----
-
-### 📂 Dataset Configuration
+####  Dataset Configuration
 
 The dataset path is selected based on the `task`:
 
@@ -452,9 +462,7 @@ The dataset path is selected based on the `task`:
 
 This is resolved dynamically via the `dataset_map`.
 
----
-
-### 🧠 Ollama Model Mapping
+#### Ollama Model Mapping
 
 Maps each model key (e.g., `llama`, `mistral`) to its actual name used by Ollama:
 
@@ -464,9 +472,8 @@ Maps each model key (e.g., `llama`, `mistral`) to its actual name used by Ollama
 
 The final model loaded is stored in `ollama_model`.
 
----
 
-### 📜 Prompt Templates
+#### Prompt Templates
 
 The path to the prompt definitions (in JSON) is task-specific:
 
@@ -475,9 +482,7 @@ The path to the prompt definitions (in JSON) is task-specific:
 
 These files contain the actual input templates used in prompting (zero-shot, few-shot, or custom).
 
----
-
-### 💾 Output Directory
+#### Output Directory
 
 Results will be saved under a structured folder based on task, prompt type, and model:
 
@@ -486,9 +491,7 @@ Results will be saved under a structured folder based on task, prompt type, and 
 
 Each directory contains model predictions, formatted outputs, and optionally confidence scores if available.
 
----
-
-### 🏷️ Label Names
+#### Label Names
 
 Used for evaluation and prediction formatting. Dynamically set based on the task:
 
@@ -510,138 +513,3 @@ Used for evaluation and prediction formatting. Dynamically set based on the task
 
 These are used for both evaluation and final output labeling.
 
----
-
-### ▶️ How to Run Prompting
-
-Running a prompting-based experiment is simple and requires minimal setup. The script is designed to work out-of-the-box by selecting the model, task, and prompt type.
-
-#### ✅ Minimal Required Overrides
-
-You only need to change **three parameters**:
-
-- `model`: one of `llama`, `mistral`, or `phi`
-- `task`: either `safety` or `cluster`
-- `prompt`: one of `zero_shot`, `few_shot`, or `custom`
-
-These three values are enough to load the correct dataset, prompt format, and output folder. All other parameters (like label names, prompt file paths, and Ollama model mappings) are automatically resolved from the configuration and **should not be changed** unless you know what you're doing.
-
----
-
-#### 🧪 Example Run (with overrides)
-
-You can run a prompting experiment like this:
-
-```bash
-python scripts/run_prompting.py model=llama task=cluster prompt=few_shot
-```
----
-
-### Fine-Tuning LLMs
-
-This configuration is used for supervised fine-tuning (SFT) of open-source LLMs (like LLaMA, Mistral, and Phi) using either safety or cluster classification tasks.
-
-#### 📋 General Metadata
-
-- `project_name` and `run_name`: Define the experiment's identity and logging format (including timestamp).
-- `group` and `tags`: Used for organizing runs in Weights & Biases.
-- `task`: Set to either `"safety"` or `"cluster"`.
-- `hf_token`: Hugging Face token to access model checkpoints.
-
-#### 🧠 Model Selection
-
-- `model_id`: Selects which model to fine-tune (`llama3`, `mistral`, or `phi`).
-- `model_map`: Maps `model_id` to the corresponding Hugging Face model name.
-- `model_type`: Either `"classification"` or `"casual"` depending on task format.
-
-#### 📊 Dataset Configuration
-
-- `dataset_path`: Automatically selected based on the task.
-- `num_labels`: Set to 2 (safety) or 12 (cluster).
-- `label2id` and `label_names`: Task-specific mappings for classification.
-
----
-
-#### 📁 Output Directory
-
-All fine-tuned model outputs, logs, and checkpoints are saved to the following path:
-
-```
-results/finetuning/{model_id}/{task}/{run_name}/
-```
-
-
-The `run_name` is automatically generated based on model and training parameters, using this format:
-
-```
-{model_id}-{task}-{model_type}-lr{learning_rate}-bs{batch_size}-{timestamp}
-```
-
-For example:
-```
-llama3-cluster-classification-lr2e-05-bs16-20250706_214753
-```
-
-This naming convention uniquely identifies each training run and includes:
-- The model used (e.g., `llama3`)
-- The task (`safety` or `cluster`)
-- The model type (`classification` or `casual`)
-- Learning rate (`lr`)
-- Batch size (`bs`)
-- Timestamp of when the run started
-
-Inside this folder, you will find:
-- **Model checkpoints** 
-- **Training logs** 
-- **Final model tensors**
-
-This structure makes it easy to organize and compare multiple runs.
-
-
-#### 🧪 SFT Training Settings
-
-- `batch_size`, `epochs`, `lr`, `max_seq_length`: Control training and evaluation.
-- `evaluation_strategy`: Evaluates at the end of each epoch.
-- `optim`, `scheduler`, `warmup_ratio`: Advanced optimizer settings (e.g., Paged AdamW).
-- `loss_function`: Set to `"custom"` to use weighted or task-specific loss.
-
-#### 🔁 LoRA Configuration
-
-- `r`, `alpha`, `dropout`: Control the rank and scale of Low-Rank Adaptation.
-- `target_modules`: Modules to which LoRA adapters will be applied (e.g., Q/K/V projections).
-- These can be overridden per model if needed.
-
----
-
-Only `model_id`, `task`, and a few SFT values usually need to be modified. All other parameters are dynamically inferred based on the task.
-
----
-
-### Inference 
-
-This configuration is used to run inference with a previously fine-tuned model. It loads the adapter weights, applies them to the base model, and generates predictions on the full dataset.
-
----
-
-#### 🧠 Task and Model Selection
-
-- `task`: Specifies the classification task. Options:
-  - `safety`: Binary classification (Safe vs. Unsafe)
-  - `cluster`: Multi-class classification (12 dietary topics)
-- `model_id`: Which base model to load (`llama3`, `mistral`, or `phi`)
-- `model_type`: Should match the training mode, typically `"classification"`
-
-- `run_name`: The name of the fine-tuning run whose adapter weights will be used. It must match the folder name created during fine-tuning, e.g.:
-
-```
-llama3-cluster-classification-lr1e-05-bs8-20250705_161928
-```
-
----
-
-#### 🧩 Model & Dataset Mapping
-
-- `model_map`: Maps the `model_id` to its full Hugging Face model name.
-- `dataset_map`: Dynamically resolves the dataset path based on `task`.
-
-The final dataset path used for inference is:

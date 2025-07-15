@@ -30,7 +30,7 @@ def run_custom_prompt(prompter, user_input: str, prompt_config: dict) -> str | N
 
         if prediction not in group:
             print(f"[!] Step {step}: Invalid prediction '{prediction}' not in group {group}")
-            return None
+            return 'Misclassified'
 
         selected.append(prediction)
 
@@ -42,7 +42,7 @@ def run_custom_prompt(prompter, user_input: str, prompt_config: dict) -> str | N
 
     if prediction not in final_group:
         print(f"[!] Final step: Invalid prediction '{prediction}' not in final group {final_group}")
-        return None
+        return 'Misclassified'
 
     return prediction
 
