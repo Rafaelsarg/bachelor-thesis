@@ -3,10 +3,6 @@ from omegaconf import DictConfig, OmegaConf
 import hydra
 import ollama
 import json
-import seaborn as sns
-import matplotlib.pyplot as plt
-from sklearn.metrics import classification_report, confusion_matrix
-import pandas as pd
 import os
 import sys
 
@@ -14,60 +10,35 @@ import sys
 sys.path.append("src")
 
 from prompting.ollama_prompting import OllamaPrompting
-
-
-def format_safety_prompt(text: str) -> str:
-    """
-    Preprocess the struggle+response string for safety classification.
-    Assumes the relevant part is between #...# and #END#.
-    """
-    import re
-    match = re.search(r"(.*?)\s?#(\w+)#\s?(.*?)\s?#END#", text)
-    if not match:
-        return text
-    struggle = match.group(1).strip()
-    response = match.group(3).strip()
-    return f"Patient: {struggle}\nDoctor: {response}\nClassify the safety of the doctor's response."
-
+from prompting.utils import format_safety_prompt, evaluate_and_log_metrics, save_confusion_matrix
 
 def run_custom_prompt(prompter, user_input: str, prompt_config: dict) -> str | None:
     """
-    Execute 4-step narrowing classification using predefined groups and definitions.
-    Each step presents 3 definitions; the final step compares the 3 chosen + 1 from remaining.
-    If no valid label is chosen at any point, returns None.
+    Run 4-step narrowing classification using predefined definition groups.
+    Returns the final selected label or None if the flow breaks at any step.
     """
+    # -------------- Load prompt config --------------
     system_prompt = prompt_config["system_prompt"]
     definitions = prompt_config["definitions"]
     groups = prompt_config["groups"]
 
-    selected_labels = []
+    selected = []
 
-    for i, group in enumerate(groups[:3]):
-        options = {label: definitions[label] for label in group}
-        user_prompt = build_group_prompt(user_input, options)
-        messages = prompter.build_custom_prompt(
-            custom_system_instruction=system_prompt,
-            user_input_text=user_prompt,
-            context_example={"text": ""}  
-        )
-        prediction = prompter.send_prompt_to_model(message_sequence=messages).strip().upper()
+    # -------------- Step 1–3: Predict one label from each group --------------
+    for step, group in enumerate(groups[:3], 1):
+        prediction = _predict_from_group(prompter, user_input, system_prompt, group, definitions)
 
         if prediction not in group:
-            print(f"[!] Step {i+1}: Invalid prediction '{prediction}' not in group {group}")
+            print(f"[!] Step {step}: Invalid prediction '{prediction}' not in group {group}")
             return None
-        selected_labels.append(prediction)
 
-    remaining_group = [label for label in groups[3] if label not in selected_labels]
-    final_group = selected_labels + ([remaining_group[0]] if remaining_group else [])
+        selected.append(prediction)
 
-    options = {label: definitions[label] for label in final_group}
-    user_prompt = build_group_prompt(user_input, options)
-    messages = prompter.build_custom_prompt(
-        custom_system_instruction=system_prompt,
-        user_input_text=user_prompt,
-        context_example={"text": ""}
-    )
-    prediction = prompter.send_prompt_to_model(message_sequence=messages).strip().upper()
+    # -------------- Step 4: Final decision from previous selections + 1 remaining --------------
+    remaining = [label for label in groups[3] if label not in selected]
+    final_group = selected + (remaining[:1] if remaining else [])
+
+    prediction = _predict_from_group(prompter, user_input, system_prompt, final_group, definitions)
 
     if prediction not in final_group:
         print(f"[!] Final step: Invalid prediction '{prediction}' not in final group {final_group}")
@@ -76,58 +47,24 @@ def run_custom_prompt(prompter, user_input: str, prompt_config: dict) -> str | N
     return prediction
 
 
+def _predict_from_group(prompter, user_input: str, system_prompt: str, group: list[str], definitions: dict) -> str:
+    """
+    Build prompt from definitions, send to model, return uppercase prediction.
+    """
+    # -------------- Format prompt with definitions for this group --------------
+    descs = {label: definitions[label] for label in group}
+    prompt_text = build_group_prompt(user_input, descs)
+
+    # -------------- Build message sequence and query Ollama model --------------
+    messages = prompter.build_custom_prompt(system_prompt, prompt_text, {"text": ""})
+    return prompter.send_prompt_to_model(messages).strip().upper()
+
 def build_group_prompt(user_input: str, label_definitions: dict) -> str:
     """
     Builds a prompt using square-bracketed input and a list of category definitions.
     """
     label_list = "\n".join([f"{label}: {desc}" for label, desc in label_definitions.items()])
     return f"[{user_input}]\n\n{label_list}"
-
-def evaluate_and_log_metrics(results: list, labels: list[str], focus_label: str = None) -> dict:
-    """
-    Compute precision, recall, f1-score, and optionally focus on a specific label.
-    
-    Args:
-        results (list): List of dicts with "actual" and "predicted" keys.
-        labels (list): List of label names (e.g. ["Safe", "Unsafe"]).
-        focus_label (str): If specified, filters metrics to that class.
-    
-    Returns:
-        dict: Full classification report.
-    """
-    y_true = [r["actual"] for r in results]
-    y_pred = [r["predicted"] for r in results]
-
-    # Generate full report
-    report = classification_report(y_true, y_pred, target_names=labels, output_dict=True)
-
-    return report
-
-def save_confusion_matrix(results: list, labels: list[str], output_path: str, title: str = ""):
-    """
-    Save a confusion matrix plot to a file.
-    
-    Args:
-        results (list): List of dicts with "actual" and "predicted".
-        labels (list): List of class labels in correct order.
-        output_path (str): Where to save the PNG image.
-        title (str): Optional title for the plot.
-    """
-    y_true = [r["actual"] for r in results]
-    y_pred = [r["predicted"] for r in results]
-    cm = confusion_matrix(y_true, y_pred, labels=labels)
-
-    df_cm = pd.DataFrame(cm, index=labels, columns=labels)
-    plt.figure(figsize=(12, 10))
-    sns.heatmap(df_cm, annot=True, fmt="d", cmap="Blues")
-    plt.title(title or "Confusion Matrix")
-    plt.xlabel("Predicted")
-    plt.ylabel("Actual")
-    plt.tight_layout()
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    plt.savefig(output_path)
-    plt.close()
-    print(f"[✓] Confusion matrix saved to {output_path}")
 
 @hydra.main(config_path="../config", config_name="prompting_config", version_base=None)
 def main(cfg: DictConfig):
@@ -158,18 +95,23 @@ def main(cfg: DictConfig):
         input_text = sample["struggle"]
         actual = sample["label"]
 
+        # Format safety-specific prompt if the task is "safety"
         if cfg.task == 'safety':
             input_text = format_safety_prompt(input_text)
 
+        # Decide which prompting strategy to use
         if cfg.prompt == "zero_shot":
             messages = prompter.build_zero_shot_prompt(user_input_text=input_text)
             predicted = prompter.send_prompt_to_model(message_sequence=messages)
+
         elif cfg.prompt == "few_shot":
             examples = prompt_template.get("few_shot_examples", [])
             messages = prompter.build_few_shot_prompt(user_input_text=input_text, example_pairs=examples)
             predicted = prompter.send_prompt_to_model(message_sequence=messages)
+
         elif cfg.prompt == "custom":
             predicted = run_custom_prompt(prompter, user_input=input_text, prompt_config=prompt_template)
+
         else:
             raise ValueError(f"Unsupported prompt type: {cfg.prompt}")
 
