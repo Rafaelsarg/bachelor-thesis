@@ -32,11 +32,6 @@ poetry.lock
 # PyCharm
 .idea/
 
-# Data files
-data/raw/
-data/processed/
-data/models/
-
 # Results
 results/
 
