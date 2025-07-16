@@ -2,62 +2,24 @@
 
 This repository contains the codebase developed for thesis experiments involving dietary topic classification and safety assessment of AI-generated nutrition counseling.
 
+## 📋 Table of Contents
 
-# 📋 Table of Contents
-
-- [Prerequisites](#prerequisites)
-- [Project Structure](#project-structure)
-- [Dataset](#dataset)
-- [Running Baseline Experiments](#running-baseline-experiments)
-- [Baseline Configuration Explained](#baseline-configuration-explained)
-- [Baseline Classification Module](#baseline-classification-module)
-- [Running Prompting Experiments](#running-prompting-experiments)
-- [Prompting Configuration Explained](#prompting-configuration-explained)
-- [Prompting Classification Module](#prompting-classification-module)
-- [Running Fine-tuning and Inference](#running-fine-tuning-and-inference)
-- [Fine-tuning and Inference Configuration Explained](#prompting-configuration-explained)
-- [Fine-tuning and Inference Classification Module](#prompting-classification-module)
-
-# Prerequisites
-
-To run the codebase successfully, ensure that the following software and accounts are available and properly configured:
-
-- **Python 3.12.3**  
-  All experiments were conducted using Python 3.12.3 on an Ubuntu 24.04 machine. While other Python 3.12+ versions may work, compatibility is not guaranteed.  
-  > **Note**: On Ubuntu systems, you must install the development headers with:  
-  > `sudo apt install python3.12-dev`  
-  It is strongly recommended to use a virtual environment to prevent conflicts with system-wide packages.
+- [📁 Project Structure](#project-structure)  
+- [📦 Prerequisites](#prerequisites)  
+- [🗂️ Dataset Overview](#dataset-overview)  
+- [⚙️ Running Baseline Experiments](#running-baseline-experiments)  
+- [🔧 Baseline Configuration Explained](#baseline-configuration-explained)  
+- [🧠 Baseline Classification Module](#baseline-classification-module)  
+- [💬 Running Prompting Experiments](#running-prompting-experiments)  
+- [🛠️ Prompting Configuration Explained](#prompting-configuration-explained)  
+- [🧠 Prompting Classification Module](#prompting-classification-module)  
+- [🏋️ Running Fine-Tuning and Inference](#running-fine-tuning-and-inference)  
+- [🧠 Fine-tuning & Inference Classification Module](#fine-tuning--inference-classification-module)  
 
 
-- **NVIDIA GPU: A40 or A100 (tested on Linux machines)**  
-  Training and fine-tuning large language models is computationally intensive. The code was tested on Linux machines equipped with NVIDIA A40 and A100 40GB or 80GB GPUs. Other CUDA-compatible GPUs may also work, but performance and compatibility are not guaranteed.
-
-- **CUDA-compatible GPU drivers**  
-  Ensure that the correct NVIDIA drivers and CUDA toolkit are installed on your system. These are necessary for PyTorch and Hugging Face Transformers to leverage GPU acceleration. **Cuda 12.8 Open** was installed on Ubuntu machine.
-
-- **[Hugging Face](https://huggingface.co) account and access token**  
-  Required to download and use pre-trained models from the Hugging Face Hub (e.g., Mistral, Phi, LLaMA).  
-  A token will be provided for reproduction purposes. Alternatively, you can [sign up for a free Hugging Face account](https://huggingface.co/join) and [generate your own access token](https://huggingface.co/settings/tokens) with at least `read` permission. Personal huggine face key is provided in the configs in case you do not have one with access to LLama. 
-
-  ⚠️ **For LLaMA model** (e.g., `meta-llama/Meta-Llama-3-8B-Instruct`), you must first request access from Meta. Visit the [LLaMA model page](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct) and click **"Access repository"**. You must be logged in to your Hugging Face account. Approval from Meta is required before you can download or use the model.
-
-- **[Weights & Biases](https://wandb.ai/) account and API key**  
-  Used for experiment tracking and visualization. The code automatically logs metrics such as loss, accuracy, and F1-score, along with configuration and model parameters.
-
-  You will need to **create a Weights & Biases account** to enable logging. Although the platform is paid, it offers **educational access** — you can [request academic access here](https://wandb.ai/site/education).
-
-  If you prefer to use your own account:
-  - Register at [wandb.ai](https://wandb.ai/)
-  - Generate your own API token from [your account settings](https://wandb.ai/authorize)
-  - A detailed explanation of how to change the script to use your own account will be provided.
-
-  My own Weights & Biases code will be included in the repository to ensure reproducibility. However, **you won't be able to view my hosted dashboards**.  
-  If you don’t want to use W&B, you can simply **refuse logging during the first run** — the code will proceed without saving metrics to the platform.
-
-# Project Structure
+## Project Structure
 
 Below is an overview of the main folders and their roles:
-
 
 ```
 bachelor-thesis/
@@ -84,30 +46,128 @@ bachelor-thesis/
 
 Each module and script is designed to be self-contained and reusable. The Hydra configuration system is used to cleanly manage all hyperparameters, model types, and dataset paths.
 
-# Dataset
 
-The `data/` directory is where all the datasets for this project are stored.
+## 📦 Prerequisites
 
-Inside `data/`, you'll find a `processed` subdirectory. This `processed` directory contains datasets that have already been prepared and are in the Hugging Face (`.hf`) format.
+Before running any experiments or scripts in this repository, make sure your environment is properly set up. Below is a list of required tools, hardware, and accounts to ensure full compatibility and reproducibility.
 
-Specifically, within `processed`, you'll see:
+---
 
-* **`cluster-dataset-70-25-5.hf`**: This is the processed dataset used for the "cluster" classification task. The numbers "70-25-5" refer to the split percentages for training, testing and validation data, respectively.
-* **`safety-dataset-90-5-5.hf`**: This is the processed dataset used for the "safety" classification task. Similarly, "90-5-5" indicates the training, testing and validation data split.
+### ✅ Required Software and Tools
 
-# Setup and Installation
+- **Python 3.12.3**  
+  All experiments were conducted using Python 3.12.3 on Ubuntu 24.04. While other Python 3.12+ versions may work, compatibility is not guaranteed.  
 
-Follow these steps to set up the environment and install all necessary dependencies:
+  > 💡 **Note:** On Ubuntu, install the development headers with:  
+  > `sudo apt install python3.12-dev`  
+
+  It is strongly recommended to use a virtual environment to avoid conflicts with system-wide packages.
+
+- **CUDA-compatible NVIDIA GPU**  
+  Fine-tuning large models is computationally intensive. The code was tested on:
+  - NVIDIA A40 (40GB)
+  - NVIDIA A100 (40GB and 80GB)  
+
+  Other CUDA-capable GPUs may work, but performance and compatibility are not guaranteed.
+
+- **CUDA Drivers and Toolkit**  
+  Ensure you have the correct NVIDIA drivers and CUDA Toolkit installed. These are required for GPU acceleration via PyTorch and Hugging Face Transformers.  
+
+  The tested version on Ubuntu was:  
+  `CUDA 12.8 Open`
+
+---
+
+### 🔐 Required Accounts and API Keys
+
+- **[Hugging Face](https://huggingface.co) Account**  
+  Required to download pre-trained models (e.g., Mistral, Phi, LLaMA) from the Hugging Face Hub.  
+
+  You can:
+  - Use the provided token in `config/` (recommended for reproducibility), or
+  - [Sign up for a free account](https://huggingface.co/join)
+  - [Generate your own access token](https://huggingface.co/settings/tokens) with at least `read` permission
+
+  ⚠️ **LLaMA Access Required**  
+  For models like `meta-llama/Meta-Llama-3-8B-Instruct`, you must request access from Meta via the [model page](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct) before using the model.
+
+- **[Weights & Biases (wandb)](https://wandb.ai/) Account**  
+  Used for experiment tracking and visualization (loss, accuracy, F1, configuration, etc.).
+
+  Steps:
+  - [Sign up here](https://wandb.ai/)
+  - [Generate your API key](https://wandb.ai/authorize)
+
+  💡 **Tip:** Educational account is available, [request free academic access](https://wandb.ai/site/education).
+
+  You can:
+  - Use your own account and key
+  - Or disable W&B logging
+
+  ⚠️ **No W&B? No problem!**  
+  On first run, you’ll be asked whether to enable logging. 
+
+  ```bash
+  wandb: (1) Create a W&B account
+  wandb: (2) Use an existing W&B account
+  wandb: (3) Don't visualize my results
+  ```
+
+  - **Option 1**: Create a new W&B account (redirects to a browser).
+  - **Option 2**: Use an existing W&B API key. 
+  - **Option 3**: Skip logging and run locally.
+
+> ✅ Choose option 3 to disable W&B logging if not needed.
+
+
+## Dataset Overview
+
+All datasets used in this project are stored in the `data/` directory. These datasets have been preprocessed and saved in Hugging Face’s optimized `.hf` format for efficient loading and training.
+
+---
+
+### 📁 Directory Structure
+
+The key subdirectory is:
+
+```
+data/
+└── processed/
+├──────|cluster-dataset-70-25-5.hf
+└──────|safety-dataset-90-5-5.hf
+```
+---
+### 📊 Available Datasets
+
+- **`cluster-dataset-70-25-5.hf`**  
+  This dataset is used for the **cluster classification task**.  
+  - Format: Hugging Face `.hf`
+  - Split:  
+    - **70%** training  
+    - **25%** testing  
+    - **5%** validation  
+
+- **`safety-dataset-90-5-5.hf`**  
+  This dataset is used for the **safety classification task**.  
+  - Format: Hugging Face `.hf`  
+  - Split:  
+    - **90%** training  
+    - **5%** testing  
+    - **5%** validation  
+---
+
+##  Setup and Installation
+
+Follow these steps to set up your environment and install all necessary dependencies for running experiments.
+
+---
 
 ### 1. Clone the Repository
 
-Repository link:
-```
-https://github.com/Rafaelsarg/bachelor-thesis
-```
+Clone the project from GitHub:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/Rafaelsarg/bachelor-thesis
 cd bachelor-thesis
 ```
 
@@ -136,7 +196,8 @@ pip install -r requirements.txt
 Required only for using the `word2vec` vectorizer in baseline models.
 
 - File: `GoogleNews-vectors-negative300.bin.gz` (~1.5 GB)  
-- Download from: https://www.kaggle.com/datasets/adarshsng/googlenewsvectors
+- Download from: https://drive.google.com/file/d/0B7XkCwpI5KDYNlNUTTlSS21pQmM/edit?pli=1&resourcekey=0-wjGZdNAUop6WykTtMip30g
+- The link is accessed 16/07/2025
 
 **Instructions:**
 - Extract the file to obtain `GoogleNews-vectors-negative300.bin`
@@ -154,62 +215,120 @@ Ollama is required only for running prompting tasks.
 - Windows:  
   Download the installer from https://ollama.com/
 
-# Running Baseline Experiments
+##  Running Baseline Experiments
 
-## Overview
-The baseline workflow trains and evaluates traditional machine learning models for text classification tasks (e.g., safety or clustering) using vectorizers (Bag-of-Words, TF-IDF, Word2Vec, Sentence-BERT) and classifiers (Logistic Regression, Naive Bayes, SVM, Random Forest). It is configured via `config/baseline_config.yaml` and executed through `scripts/run_baselines.py`, which leverages the preprocessing and pipeline logic in `src/baselines/classification.py`.
+This module trains and evaluates traditional machine learning models for text classification tasks—such as safety classification or topic clustering—using various vectorization methods and classifiers.
 
-## Components
-- **Entry Point**: `scripts/run_baselines.py`
-  - Main script that loads configurations, preprocesses data, and runs the classification pipeline.
-- **Core Logic**: `src/baselines/classification.py`
-  - Implements vectorization, model training with grid search, and result visualization.
-- **Text Processor**: `src/baselines/data_processor.py`
-  - Implements text preprocessing
-- **Configuration File**: `config/baseline_config.yaml`
-  - Defines task type, dataset path, vectorizer, classifier, and grid search parameters.
+---
 
-## Running the Script
-You can execute baseline experiments in two ways:
+### 📌 Overview
 
-1. **Using Command-Line Overrides**:
-   - Specify configuration values directly in the command line for quick experiments without modifying the YAML file.
-   - Example (basic override):
-     ```bash
-     python scripts/run_baselines.py task=cluster vectorizer.type=bow classifier.type=lr
-     ```
-   - Example (with hyperparameter overrides):
-     ```bash
-     python scripts/run_baselines.py   task=cluster   vectorizer.type=tfidf   \
-      vectorizer.grid_params.max_features=[10000]   \
-      vectorizer.grid_params.min_df=[1]  \
-      vectorizer.grid_params.ngram_range=[[1,1]]   \
-      classifier.type=svm  \
-      classifier.grid_params.svm.C=[1] \
-      classifier.grid_params.svm.kernel=[linear]
-     ```
-   - **Note**: Command-line overrides are ideal for small changes but can become cumbersome for extensive modifications.
+Baseline experiments use combinations of:
 
-2. **Using the YAML Configuration**:
-   - Edit `config/baseline_config.yaml` to specify task, dataset, vectorizer, classifier, and grid search parameters.
-   - Run the script without overrides:
-     ```bash
-     python scripts/run_baselines.py
-     ```
-   - **Advantage**: Simplifies managing complex configurations, especially for hyperparameter tuning or model changes.
+- **Vectorizers**: Bag-of-Words, TF-IDF, Word2Vec, Sentence-BERT  
+- **Classifiers**: Logistic Regression, Naive Bayes, SVM, Random Forest
 
-## Outputs
+The entire pipeline is configured via `config/baseline_config.yaml` and executed with the script `scripts/run_baselines.py`. The core training and evaluation logic is implemented in `src/baselines/classification.py`.
+
+---
+
+### 🧱 Key Components
+
+- **📄 Entry Point** – `scripts/run_baselines.py`  
+  Loads configuration, performs preprocessing, and executes the full classification pipeline.
+
+- **⚙️ Core Logic** – `src/baselines/classification.py`  
+  Handles vectorization, model training (with GridSearchCV), and result reporting/visualization.
+
+- **🧼 Preprocessing** – `src/baselines/data_processor.py`  
+  Performs text cleaning and transformation prior to vectorization.
+
+- **⚙️ Configuration File** – `config/baseline_config.yaml`  
+  Defines:
+  - Task type (`safety` or `cluster`)
+  - Dataset path
+  - Vectorizer and its parameters
+  - Classifier and its hyperparameters
+
+---
+
+### ▶️ How to Run
+
+You can run baseline experiments in two ways:
+
+#### ✅ Option 1: With Command-Line Overrides
+
+Useful for quick experiments without editing the YAML file.
+
+You can mix and match different **tasks**, **vectorizers** and **classifiers** using Hydra-style key-value overrides.
+
+---
+
+
+### 🧠 Valid Task Options:
+- `safety` – Safety Classification
+- `cluster` – Cluster Classification
+
+### 🧠 Valid Vectorizer Options:
+- `bow` – Bag-of-Words
+- `tfidf` – Term Frequency–Inverse Document Frequency
+- `word2vec` – Pretrained Word2Vec embeddings
+- `sentence_bert` – Sentence-level embeddings via pretrained SBERT
+
+### 🤖 Valid Classifier Options:
+- `lr` – Logistic Regression
+- `nb` – Complement Naive Bayes
+- `svm` – Support Vector Machine
+- `rf` – Random Forest
+
+---
+
+**Basic example:**
+```bash
+python scripts/run_baselines.py task=cluster vectorizer.type=bow classifier.type=lr
+```
+
+**With hyperparameter overrides:**
+```bash
+python scripts/run_baselines.py task=cluster \
+  vectorizer.type=tfidf \
+  vectorizer.grid_params.max_features=[10000] \
+  vectorizer.grid_params.min_df=[1] \
+  vectorizer.grid_params.ngram_range=[[1,1]] \
+  classifier.type=svm \
+  classifier.grid_params.svm.C=[1] \
+  classifier.grid_params.svm.kernel=[linear]
+```
+
+#### ✅ Option 2: Using the YAML Configuration File
+
+This method is ideal for reproducible and maintainable experiments. All model and training parameters are defined in a single configuration file.
+
+1. **Open the file** `config/baseline_config.yaml`
+2. **Edit the following fields as needed:**
+   - `task`: `"safety"` or `"cluster"`
+   - `vectorizer`: Choose from `"bow"`, `"tfidf"`, `"word2vec"`, or `"sentence_bert"`
+   - `classifier`: Choose from `"lr"`, `"nb"`, `"svm"`, or `"rf"`
+   - Define any grid search parameters under the corresponding section
+
+3. **Run the script with no overrides:**
+
+```bash
+python scripts/run_baselines.py
+```
+
+### 📁 Outputs
 - **Results**: JSON files containing best parameters, label mappings, and evaluation metrics (e.g., F1-macro, classification report) saved in `results/baselines/${task}/${classifier.type}/${vectorizer.type}`.
 - **Visualizations**: Confusion matrix plots saved as PNG files in `results/baselines/${task}/${classifier.type}/${vectorizer.type}`.
 
-## Configuration Details
-For detailed guidance on configuring `baseline_config.yaml`, refer to [Baseline Configuration Explained](#baseline-configuration-explained) in the full project documentation.
+## Baseline Configuration Overview
 
-# Baseline Configuration Explained
+Baseline experiments are configured via `config/baseline_config.yaml`. Below is a concise overview of key sections.
 
-The `config/baseline_config.yaml` file defines settings for running baseline classification experiments with traditional machine learning models and feature extraction methods.
+---
 
-## Task and Dataset
+### 🧪 Task and Dataset
+
 ```yaml
 task: "cluster"
 dataset_map:
@@ -217,11 +336,11 @@ dataset_map:
   cluster: "data/processed/cluster-dataset-70-25-5.hf"
 dataset_path: "${dataset_map[${task}]}"
 ```
-- **`task`**: Task type (`"safety"` for binary classification, `"cluster"` for multi-class).
+- **`task`**: Task type (`"safety"` or `"cluster"` for dietary topic classification).
 - **`dataset_map`**: Maps tasks to dataset paths.
 - **`dataset_path`**: Resolves to the dataset path based on `task` (e.g., `data/processed/cluster-dataset-70-25-5.hf` for `cluster`).
 
-## Vectorizer Settings
+### 🔤 Vectorizer Settings
 ```yaml
 vectorizer:
   type: "word2vec"
@@ -240,7 +359,7 @@ vectorizer:
   - `min_df`: Minimum document frequency for tokens.
   - `ngram_range`: N-gram ranges (e.g., `[1, 2]` for unigrams and bigrams).
 
-## Classifier Settings
+### 🤖 Classifier Settings
 ```yaml
 classifier:
   type: "lr"
@@ -285,7 +404,7 @@ classifier:
     - `max_depth`: Maximum tree depth.
     - `min_samples_split`: Minimum samples to split a node.
 
-## Embedding Paths
+### Embedding Paths
 ```yaml
 word2vec_path: "data/GoogleNews-vectors-negative300.bin"
 sentence_bert_model: "sentence-transformers/all-MiniLM-L6-v2"
@@ -293,175 +412,348 @@ sentence_bert_model: "sentence-transformers/all-MiniLM-L6-v2"
 - **`word2vec_path`**: Path to pre-trained Word2Vec model (required for `vectorizer.type="word2vec"`).
 - **`sentence_bert_model`**: Hugging Face Sentence-BERT model name (required for `vectorizer.type="sentence_bert"`, auto-downloaded on first run).
 
-# Baseline Classification Module
+## Baseline Classification Module
 
-## Overview
-The `src/baselines/classification.py` module provides a text classification pipeline for tasks like safety classification or clustering. It supports multiple vectorizers (Bag-of-Words, TF-IDF, Word2Vec, Sentence-BERT) and classifiers (Logistic Regression, Naive Bayes, SVM, Random Forest). The module includes text preprocessing, feature extraction, model training with grid search, and result visualization, configured via `config/baseline_config.yaml` and executed through `scripts/run_baselines.py`.
+This module (`src/baselines/classification.py`) defines the classification pipeline used for both **safety** and **topic (cluster)** classification. It supports multiple vectorizers and classifiers, includes preprocessing logic, and integrates with `config/baseline_config.yaml` and `scripts/run_baselines.py`.
 
-## Classes
+---
 
-### 1. `Word2VecVectorizer(TransformerMixin)`
-- **Purpose**: Converts text into averaged Word2Vec embeddings for classification.
-- **Description**: A scikit-learn-compatible transformer that takes a pre-trained Word2Vec model and averages word vectors for each sentence to produce fixed-length embeddings. Returns a numpy array of embeddings.
-- **Usage**: Used when `vectorizer_type="word2vec"` to generate embeddings for classifier input.
+#### `Word2VecVectorizer(TransformerMixin)`
+- Averages pretrained Word2Vec word embeddings into a fixed-length vector.
 
-### 2. `SentenceBERTVectorizer(TransformerMixin)`
-- **Purpose**: Encodes text using Sentence-BERT for classification.
-- **Description**: A scikit-learn-compatible transformer that uses a pre-trained Sentence-BERT model to encode entire sentences into dense embeddings. Returns a numpy array of embeddings.
-- **Usage**: Applied when `vectorizer_type="sentence_bert"` for semantic text representation.
+#### `SentenceBERTVectorizer(TransformerMixin)`
+- Encodes full sentences using a pretrained Sentence-BERT model.
 
-## Functions
+---
 
-#### 1. `clean_text_bow_tfidf(text: str) -> str`
-- **Purpose**: Preprocesses text for BoW or TF-IDF vectorizers.
-- **Description**: Converts text to lowercase, removes digits and punctuation, tokenizes, removes stopwords, and applies lemmatization. Returns cleaned text as a string.
-- **Usage**: Used for `vectorizer_type="bow"` or `"tfidf"` to prepare text for traditional feature extraction.
+### 🧼 Preprocessing Functions
 
-#### 2. `clean_text_embeddings(text: str) -> str`
-- **Purpose**: Minimally preprocesses text for embedding-based models.
-- **Description**: Applies only lowercasing to retain semantic structure suitable for Word2Vec or Sentence-BERT embeddings.
-- **Usage**: Used for `vectorizer_type="word2vec"` or `"sentence_bert"`.
+| Function | Purpose |
+|---------|---------|
+| `clean_text_bow_tfidf(text)` | Full text cleaning (for BoW/TF-IDF) |
+| `clean_text_embeddings(text)` | Minimal cleaning (for Word2Vec/Sentence-BERT) |
+| `process_struggle_response_pair(text)` | Extracts `<struggle>#label#<response>` format for safety tasks |
+| `preprocess_data(...)` | Loads dataset, cleans text, encodes labels |
 
-#### 3. `process_struggle_response_pair(text: str) -> str`
-- **Purpose**: Extracts struggle and response from text for safety classification.
-- **Description**: Parses text in the format `<struggle> #label# <response> #END#` using regex, returning a combined string or `None` if invalid.
-- **Usage**: Applied when `task_type="safety"` to process struggle-response pairs.
+---
 
-#### 4. `preprocess_data(dataset_path: str, vectorizer_type: str, task_type: str, verbose: bool = False) -> tuple`
-- **Purpose**: Loads and preprocesses a dataset for classification.
-- **Description**: Loads a `DatasetDict`, applies appropriate text cleaning based on `vectorizer_type` and `task_type`, and encodes labels as integers. For `task_type="safety"`, converts N/Y labels to Unsafe/Safe. Returns training/test features, labels, and a label mapping dictionary.
-- **Usage**: Prepares data for the classification pipeline.
+### 🔧 Utility Functions
 
-#### 5. `get_vectorizer(vectorizer_type: str, params: dict, sentence_bert_model: str = None, word2vec_path: str = None, verbose: bool = False) -> Transformer`
-- **Purpose**: Initializes a vectorizer based on the specified type.
-- **Description**: Creates a `CountVectorizer` (BoW), `TfidfVectorizer` (TF-IDF), `Word2VecVectorizer`, or `SentenceBERTVectorizer` with provided parameters or model paths.
-- **Usage**: Sets up the vectorizer for the pipeline based on configuration.
+| Function | Description |
+|----------|-------------|
+| `get_vectorizer(...)` | Returns vectorizer based on type and config |
+| `get_classifier(...)` | Returns classifier and its hyperparameter grid |
+| `save_results(...)` | Saves metrics and config as JSON |
+| `run_pipeline(...)` | Runs the full classification pipeline: vectorization → optional feature selection → classification → evaluation and visualization |
 
-#### 6. `get_classifier(clf_name: str, clf_params: dict, verbose: bool = False, multi_class: bool = False) -> tuple`
-- **Purpose**: Initializes a classifier and its hyperparameter grid.
-- **Description**: Creates a classifier (Logistic Regression, ComplementNB, SVM, or Random Forest) and defines its grid search parameters. Configures SVM for multi-class if needed.
-- **Usage**: Sets up the classifier for the pipeline.
+---
 
-#### 7. `save_results(results: dict, results_dir: str, filename: str)`
-- **Purpose**: Saves classification results to a JSON file.
-- **Description**: Writes a dictionary containing metrics and parameters to a JSON file in `results_dir`.
-- **Usage**: Stores evaluation results and best parameters for analysis.
+### 📁 Example Pipeline Flow
+1. Clean and load dataset via `preprocess_data`
+2. Create vectorizer and classifier objects
+3. Fit pipeline using `run_pipeline`
+4. Save metrics and confusion matrix to `results/`
 
-#### 8. `run_pipeline(X_train, X_test, y_train, y_test, vectorizer_type: str, vectorizer_params: dict, clf_name: str, clf_params: dict, task_type: str, results_dir: str, feature_selection_cfg: dict = None, word2vec_path: str = None, sentence_bert_model: str = None, verbose: bool = False) -> tuple`
-- **Purpose**: Executes the full classification pipeline.
-- **Description**: Builds a scikit-learn pipeline with a vectorizer, optional feature selection (for BoW/TF-IDF with Logistic Regression or SVM), and a classifier. Performs grid search, evaluates the model, saves results as JSON, and generates a confusion matrix plot. Returns the best estimator and parameters.
-- **Usage**: Core function to train and evaluate models, called by `run_baselines.py`.
+---
 
-## Dependencies
-- **Python Libraries**: `re`, `string`, `numpy`, `matplotlib.pyplot`, `seaborn`, `datasets`, `sklearn` (multiple modules), `nltk`, `sentence_transformers`, `gensim`
-- **NLTK Resources**: `stopwords`, `punkt`, `wordnet`, `punkt_tab`
+### 📚 Dependencies
 
-## Usage
-The module is used within a classification pipeline configured via `config/baseline_config.yaml` and executed by `scripts/run_baselines.py`. It processes a `DatasetDict` with train/test splits, applies text preprocessing, vectorizes data, trains a model, and saves results.
+- **Python libs**: `re`, `string`, `numpy`, `matplotlib`, `seaborn`, `datasets`, `sklearn`, `nltk`, `sentence_transformers`, `gensim`
+- **NLTK corpora**: `punkt`, `stopwords`, `wordnet`
 
-# Running Prompting Experiments
+## Running Prompting Experiments
 
-## Overview
-The prompting workflow uses local LLMs via Ollama for text classification tasks (e.g., safety or clustering) with zero-shot, few-shot, or custom prompting strategies. It is configured via `config/prompting_config.yaml` and executed through `scripts/run_prompting.py`, which leverages the `OllamaPrompting` class and utilities in `src/prompting/ollama_prompting.py`.
+This module enables zero-shot, few-shot, or custom prompt-based classification using local LLMs via **Ollama**. It supports both safety and topic (cluster) classification tasks.
 
-## Components
-- **Entry Point**: `scripts/run_prompting.py`
-  - Loads configuration, processes test data, sends prompts to the Ollama model, and saves results.
-- **Core Logic**: `src/prompting/ollama_prompting.py`
-  - Implements the `OllamaPrompting` class for prompt construction and model interaction, plus custom prompting functions.
-- **Configuration File**: `config/prompting_config.yaml`
-  - Specifies task, prompt type, model, dataset, and prompt template paths.
+---
 
-## Running the Script
-Ensure the Ollama server is running locally (`ollama serve`) before executing the script. You can run prompting experiments in two ways:
+### 📌 Overview
 
-1. **Using Command-Line Overrides**:
-   - Specify configuration values directly for quick experiments without editing the YAML file.
-   - Example (basic override):
-     ```bash
-     python scripts/run_prompting.py task=cluster prompt=zero_shot model=mistral
-     ```
-   - Example (with prompt-specific overrides):
-     ```bash
-     python scripts/run_prompting.py task=safety prompt=few_shot model=llama 
-     ```
-   - **Note**: Command-line overrides are suitable for small changes but can be unwieldy for complex configurations.
+Prompting is configured through `config/prompting_config.yaml` and executed via:
 
-2. **Using the YAML Configuration**:
-   - Edit `config/prompting_config.yaml` to set task, prompt type, model, dataset path, and prompt templates.
-   - Run the script without overrides:
-     ```bash
-     python scripts/run_prompting.py
-     ```
-   - **Advantage**: Simplifies managing detailed settings, especially for few-shot examples or custom prompting.
+```bash
+python scripts/run_prompting.py
+```
 
-## Outputs
-- **Results**: JSON file with input text, true labels, and predicted labels, saved in `results/prompting/safety/${prompt}/${model}` or `results/prompting/cluster/${prompt}/${model}` .
-- **Metrics**: JSON file with evaluation metrics (e.g., F1-score, accuracy), saved as `<model>_<prompt>_metrics.json`.
-- **Visualizations**: Confusion matrix plot saved as `<model>_<prompt>_confusion_matrix.png`.
+### 🔧 Key Components
 
-### Configuration Details
-For guidance on configuring `prompting_config.yaml`, refer to [Prompting Configuration Explained](#prompting-configuration-explained) in the full project documentation.
+- **🟢 Entry Point** – `scripts/run_prompting.py`  
+  Loads configuration, processes test data, sends prompts to the Ollama model, and saves the outputs.
 
-# Prompting Configuration Explained
+- **🧠 Core Logic** – `src/prompting/ollama_prompting.py`  
+  Contains the `OllamaPrompting` class responsible for:
+  - Prompt construction based on the selected strategy (`zero_shot`, `few_shot`, `custom`)
+  - Interfacing with the local Ollama model
+  - Returning model predictions
 
-The core of the experiment's setup is managed through the `prompting_config.yaml` file. This file uses Hydra for configuration management, allowing for a flexible and organized way to define parameters.
+- **⚙️ Configuration File** – `config/prompting_config.yaml`  
+  Defines:
+  - `task`: `safety` or `cluster`
+  - `prompt`: Prompting strategy (`zero_shot`, `few_shot`, or `custom`)
+  - `model`: LLM identifier (e.g., `llama`, `mistral`, `phi`)
 
-## User-Editable Parameters
+---
 
-At the top of the `prompting_config.yaml` file, you'll find the primary parameters you can change to control the prompting process:
+### ▶️ How to Run
 
-* **`model`**: Specifies the base LLM to use.
-    * **Choices**: `"llama"`, `"mistral"`, `"phi"`
-    * **How it works**: This key maps to a specific model identifier in the `ollama_models` section (e.g., `mistral` maps to `mistral:7b`).
+> ⚠️ Make sure the Ollama server is running locally before executing:
+> ```bash
+> ollama serve
+> ```
 
-* **`task`**: Defines the classification task to be performed.
-    * **Choices**: `"safety"`, `"cluster"`
-    * **How it works**: This choice determines which dataset to load (from `dataset_config.dataset_map`), which prompt templates to use (from `prompts_path`), and where to save the results (in `output_directory`).
+#### ✅ Option 1: Command-Line Overrides
 
-* **`prompt`**: Selects the prompting strategy.
-    * **Choices**: `"zero_shot"`, `"few_shot"`, `"custom"`
-    * **Note**: The `"custom"` prompt is only available for the `"cluster"` task.
-    * **How it works**: This selects the specific prompt structure from the corresponding `.json` file (e.g., `safety_prompts.json`).
+Useful for quick testing without editing the YAML file.
 
-## Dynamic Configuration
+**Example – Zero-shot Cluster Classification**
+```bash
+python scripts/run_prompting.py task=cluster prompt=zero_shot model=mistral
+```
 
-The rest of the `prompting_config.yaml` file uses variable substitution (`${...}`) to dynamically create paths and select values based on your choices in the user-editable section. For example, if you set `task: safety`, the `dataset_path` automatically resolves to the path specified for `safety` in the `dataset_map`. This system ensures that all components (data, model, prompts, and output directories) are correctly aligned for the selected task and model without needing to manually change paths.
+**Example – Few-shot Cluster Classification**
+```bash
+python scripts/run_prompting.py task=safety prompt=few_shot model=llama
+```
+⚠️ Command-line overrides are ideal for small experiments. For reproducibility and complex prompts, use the YAML config instead.
 
-# Prompting Classification Module
+---
 
-The classification logic is primarily handled by two Python scripts: `ollama_prompting.py` and `run_prompting.py`.
+#### ✅ Option 2: YAML Configuration
 
-### `ollama_prompting.py`: The Core Prompting Engine
+This method is recommended for larger experiments, prompt template management, or when sharing setups with others.
 
-This script contains the `OllamaPrompting` class, which is a wrapper for interacting with the Ollama API.
+1. Open `config/prompting_config.yaml`
+2. Specify the following fields:
+   - `task`: `"safety"` or `"cluster"`
+   - `prompt`: `"zero_shot"`, `"few_shot"`, or `"custom"`
+   - `model`: e.g., `"llama"`, `"mistral"`, `"phi"`
 
-* `__init__(self, model_name, system_instruction)`: Initializes the prompter with the specified Ollama model and a system-level instruction that sets the context for the AI.
+3. Run the script without overrides:
 
-* `send_prompt_to_model(...)`: Takes a sequence of messages and sends them to the Ollama model, returning the model's response.
+```bash
+python scripts/run_prompting.py
+```
 
-* **Prompt Building Methods**:
-    * `build_zero_shot_prompt(...)`: Creates a simple prompt containing only the system instruction and the user's input text.
-    * `build_few_shot_prompt(...)`: Constructs a prompt that includes a system instruction, a few examples of input-output pairs, and then the user's input text. This helps the model understand the desired format and task better.
-    * `build_custom_prompt(...)`: Used for more complex scenarios. It assembles a prompt with a custom system instruction and contextual examples.
-    * `run_custom_prompt(...)`: A specialized function for the `"cluster"` task. It performs a multi-step classification process, narrowing down the possible labels in stages to arrive at a final classification.
+### 📤 Outputs
 
-### `run_prompting.py`: The Main Execution Script
+All outputs are saved under:
+```
+results/prompting/{task}/{prompt}/{model}/
+```
 
-This script ties everything together using the configuration from `prompting_config.yaml`.
+This directory contains the following files:
 
-* **Loads Configuration**: It uses Hydra to load the configuration, resolving all the dynamic paths and parameters.
-* **Loads Data**: It loads the appropriate test dataset based on the selected `task`.
-* **Pulls Model**: It ensures the specified Ollama model is available locally.
-* **Loads Prompts**: It reads the corresponding prompt template (`.json` file) for the chosen `task` and `prompt` strategy.
-* **Instantiates Prompter**: It creates an instance of the `OllamaPrompting` class.
-* **Executes Prompting Loop**: It iterates through each sample in the dataset and:
-    * Builds the appropriate prompt (zero-shot, few-shot, or custom).
-    * Sends the prompt to the model to get a prediction.
-    * Stores the input, actual label, and predicted label.
-* **Saves Results & Evaluates**:
-    * The results are saved to a `.json` file in the directory specified by the configuration.
-    * It calculates and saves performance metrics (like precision, recall, and F1-score) and a confusion matrix image.
+- All Input-Actual-Predicted triples
+- File with all the metrics
+- Confusion matrix png
+
+## Prompting Classification Module
+
+The logic for prompt-based classification is split across two main scripts:
+
+---
+
+### 📄 `src/prompting/ollama_prompting.py` – Core Prompting Engine
+
+This file defines the `OllamaPrompting` class, which interfaces with the local Ollama API and handles prompt construction for different strategies.
+
+#### 🔧 Key Methods
+
+- `__init__(self, model_name, system_instruction)`  
+  Initializes the prompting engine with a selected model and system-level context.
+
+- `send_prompt_to_model(messages)`  
+  Sends a list of messages (in chat format) to the Ollama model and returns the response.
+
+#### 🧱 Prompt Construction
+
+- `build_zero_shot_prompt(...)`  
+  Constructs a minimal prompt with just system instruction and user input.
+
+- `build_few_shot_prompt(...)`  
+  Adds a few input-output examples before the test input to guide the model.
+
+- `build_custom_prompt(...)`  
+  Builds a fully custom prompt with examples, metadata, or reasoning chains.
+
+- `run_custom_prompt(...)`  
+  Used for the `cluster` task — performs a multi-step narrowing-down classification across multiple definition groups to arrive at the final label.
+
+---
+
+### 🚀 `scripts/run_prompting.py` – Execution Script
+
+This script runs the prompting pipeline using the configuration from `config/prompting_config.yaml`.
+
+#### 🔄 Workflow Steps
+
+- **🔧 Load Config**  
+  Uses Hydra to load `prompting_config.yaml`, resolving task, prompt type, model name, etc.
+
+- **📥 Load Dataset**  
+  Loads the appropriate test dataset based on the selected `task`.
+
+- **⬇️ Pull Model**  
+  Checks and pulls the specified Ollama model if not already present locally.
+
+- **📜 Load Prompt Template**  
+  Loads `.json` prompt templates for `few_shot` and `custom` prompts.
+
+- **🤖 Initialize Prompter**  
+  Creates an instance of `OllamaPrompting` with the configured model and system message.
+
+- **🔁 Prompting Loop**  
+  Iterates through each test sample and:
+  - Builds a prompt (zero-shot, few-shot, or custom)
+  - Sends it to the model and receives a prediction
+  - Collects the original text, true label, and predicted label
+
+- **💾 Save & Evaluate**  
+  - Saves results to `results/prompting/{task}/{prompt}/{model}/results.json`
+  - Computes metrics (accuracy, precision, recall, F1) and saves them as a `.json`
+  - Generates and saves a confusion matrix as a `.png` image
+
+---
+
+This modular design makes it easy to plug in new models, modify prompting strategies, or extend to other tasks.
+
+## 🏋️ Running Fine-tuning and Inference
+
+**Fine-Tuning Script**: `scripts/run_finetuning.py`  
+**Inference Script**: `scripts/run_inference.py`
+
+These scripts allow you to fine-tune and evaluate large language models (LLaMA 3, Mistral, or Phi) for:
+
+- **Dietary Topic Classification** (`cluster`)
+- **Safety Classification** (`safety`)
+
+Fine-tuning is performed using **QLoRA** + **Hugging Face PEFT**, enabling efficient training on consumer-grade GPUs.
+
+> ⚠️ **Note**:  
+> - **Safety fine-tuning** may take **10–24 hours**  
+> - **Cluster fine-tuning** typically takes **1–3 hours**  
+> - Large batch sizes may cause out-of-memory (OOM) errors depending on your VRAM.
+
+---
+
+## 🧪 Weights & Biases (W&B) Logging
+
+During training or inference, you may see:
+
+```text
+wandb: (1) Create a W&B account
+wandb: (2) Use an existing W&B account
+wandb: (3) Don't visualize my results
+```
+
+(1) Opens browser to register a new account
+(2) Use your existing API key
+(3) Disables logging (local run only)
+
+✅ Select option 3 if you don’t want to use W&B
+
+## 🔧 Fine-Tuning Configuration
+
+All fine-tuning settings are defined in `config/finetune_config.yaml`. Below are the key configuration blocks:
+
+---
+
+### 🔹 Core Settings
+
+```yaml
+model: "llama"
+model_type: "classification"
+task: "cluster"
+model_id: "llama3"
+```
+
+| Parameter     | Description                                                                 |
+|---------------|-----------------------------------------------------------------------------|
+| `model`       | Base model family. Options: `"llama"`, `"mistral"`, `"phi"`                |
+| `model_type`  | Type of training head. `"classification"` adds a classifier head, `"causal"` uses next-token prediction |
+| `task`        | Task to fine-tune on. Choices: `"safety"` (binary) or `"cluster"` (multi-class) |
+| `model_id`    | Internal alias used for model loading, checkpoint saving, and prompt formatting (e.g., `"llama3"`, `"mistral"`) |
+
+---
+
+### ⚙️ `sft_config` – Supervised Fine-Tuning Parameters
+
+| Parameter                    | Description                                                                 |
+|-----------------------------|-----------------------------------------------------------------------------|
+| `batch_size`                | Number of samples per training batch (e.g., `6`, `16`)                      |
+| `epochs`                    | Number of complete passes through the training set                         |
+| `lr`                        | Learning rate for the optimizer (e.g., `2e-5`, `5e-5`)                      |
+| `evaluation_strategy`       | When to run evaluation. Options: `"epoch"` or `"steps"`                    |
+| `gradient_accumulation_steps` | Number of steps to accumulate gradients before a backward pass            |
+| `max_grad_norm`             | Maximum gradient norm for clipping (helps with training stability)         |
+| `lr_scheduler_type`         | Scheduler for adjusting learning rate. Common choice: `"cosine"`           |
+| `warmup_ratio`              | Fraction of total training steps to warm up the learning rate              |
+| `optim`                     | Optimizer to use. `"paged_adamw_32bit"` is efficient for QLoRA             |
+| `logging_steps`             | Frequency (in steps) of logging metrics during training                    |
+| `max_seq_length`            | Maximum number of tokens per input. Longer sequences will be truncated     |
+| `weight_decay`              | L2 regularization coefficient applied to model weights                     |
+| `loss_function`             | Loss function for classification tasks: `"standard"` or `"custom"`         |
+
+> 🔹 `loss_function` is only used when `model_type=classification`. It is ignored for `causal` models.
+
+---
+
+### 🧩 `lora_config` – LoRA Adaptation Settings
+
+| Parameter         | Description                                                              |
+|------------------|--------------------------------------------------------------------------|
+| `r`               | Rank of the low-rank adapter matrices (e.g., 8, 16)                     |
+| `alpha`           | Scaling factor applied to the LoRA weights                              |
+| `dropout`         | Dropout applied within the LoRA layers to prevent overfitting           |
+| `target_modules`  | Specifies which layers to apply LoRA to (typically `"all-linear"`)      |
+
+
+## ▶️ How to Run Fine-Tuning
+
+You can launch fine-tuning in two ways: using command-line overrides or relying entirely on the YAML config file.
+
+---
+
+### 1️⃣ Command-Line Overrides
+
+Override any config value directly via CLI. This is useful for quick tests or one-off experiments.
+
+#### 🔹 Basic Example
+
+```bash
+python scripts/run_finetuning.py model_id=llama3 task=cluster model_type=classification
+```
+
+#### 🔹 With Custom Hyperparameters
+```bash
+python scripts/run_finetuning.py \
+  model_id=mistral \
+  task=safety \
+  model_type=classification \
+  sft_config.loss_function=standard \
+  sft_config.lr=1e-5 \
+  sft_config.batch_size=8
+
+```
+
+⚠️ loss_function is only applied if model_type=classification.
+model_id=phi supports only model_type=causal.
+
+✅ Values not overridden on the command line will still be loaded from config/finetune_config.yaml.
+
+### 2️⃣ YAML-Only Configuration (Recommended)
+
+You can run the fine-tuning process using only the YAML file by specifying all parameters in `config/finetune_config.yaml`.
+
+This is the preferred method when:
+- You want full reproducibility
+- You're testing multiple configurations
+
+Then run without overriding:
+
+```bash
+python scripts/run_finetuning.py 
+```
 
 # Running Fine-tuning and Inference
 
@@ -609,125 +901,181 @@ llama3-cluster-classification-lr2e-05-bs16-20250715_182741
 
 This helps track runs systematically and ensures clear logging when comparing multiple experiments.
 
-## Inference
 
-To perform inference using a fine-tuned model, use the `run_inference.py` script.
+## 🔍 Inference
 
-You must provide the same model configuration and `run_name` that was used during fine-tuning. This ensures the script loads the correct adapter weights and uses the proper settings for evaluation.
+You must specify the same parameters that were used during training to ensure compatibility with the saved model.
 
-### Required Parameters
+---
 
-- `task`: `"safety"` or `"cluster"`
-- `model_id`: `"llama3"`, `"mistral"`, or `"phi"`
-- `model_type`: `"classification"` or `"causal"`
-- `sequence_length`: default set to `512`
-- `run_name`: the full name of the run folder created during training
+### 📌 Required Parameters
 
-> ⚠️ **Important:** These parameters **must match exactly** the configuration used during training.  
-> Using different `task`, `model_id`, or `model_type` will result in incompatibility with the saved adapter weights and may lead to failure or incorrect inference results.
+| Parameter        | Description                                                                          |
+|------------------|--------------------------------------------------------------------------------------|
+| `task`           | Task used during fine-tuning: `"safety"` or `"cluster"`                             |
+| `model_id`       | Internal model identifier: `"llama"`, `"mistral"`, or `"phi"`                       |
+| `model_type`     | Training head used: `"classification"` or `"causal"`                                |
+| `sequence_length`| (Optional) Maximum sequence length (defaults to `512`)                               |
+| `run_name`       | Name of the fine-tuning run (auto-generated and used as folder name)                |
 
-### Example Command
+> ⚠️ All parameters **must match** those used during fine-tuning.  
+> Mismatches will lead to errors or incorrect results.
+
+---
+
+### ✅ Example Command
 
 ```bash
 python scripts/run_inference.py \
     task=cluster \
-    model_id=llama3 \
+    model_id=llama \
     model_type=classification \
     run_name=llama3-cluster-classification-lr2e-05-bs16-20250715_182741
 ```
 
-Make sure that the `run_name` exactly matches the folder created during training, which can be found in:
+Make sure the `run_name` exactly matches the folder created during fine-tuning. You can find it under:
 
-```
+```text
 results/finetuning/{model_id}/{task}/{run_name}/
 ```
 
-The script will load the adapter weights and tokenizer from the specified run, and generate predictions on the test set.
 
-Results (predictions and evaluation metrics) will be saved to:
+The script will:
+- Load the adapter weights (trained LoRA layers)
+- Load the tokenizer associated with the base model
+- Prepare the test dataset for the specified `task`
+- Generate predictions
+- Compute evaluation metrics
+
+---
+
+### 📤 Output Directory
+
+All inference outputs are saved to the same directory of model run where adapter weights are saved:
+
+```text
+results/finetuning/{model_id}/{task}/{run_name}/
 ```
-results/finetuning/{model_id}/{task}/{run_name}/inference/
-```
 
-# Fine-tuning and Inference Classification Module
+This directory includes:
 
-This module contains all the core components used to fine-tune large language models (LLMs) for classification tasks (e.g., safety or topic/cluster classification) and run inference using the fine-tuned adapters. It supports multiple architectures including LLaMA 3, Mistral, and Phi models, and allows both classification-head fine-tuning and causal LM-style prompt learning via LoRA (Low-Rank Adaptation).
+| File                    | Description                                                   |
+|-------------------------|---------------------------------------------------------------|
+| `predictions.json`      | JSON list of inputs, true labels, and model predictions       |
+| `results.json`          | Evaluation metrics: accuracy, precision, recall, F1-score     |
+| `images/confusion_matrix.png`  | PNG image showing confusion matrix of predicted vs. true labels |
 
-## Fine-tuning
+These outputs allow you to inspect model performance, generate reports, or compare runs across models and configurations.
 
-The fine-tuning workflow includes preparing datasets, formatting examples into prompt/label pairs, applying optional LoRA adapters, and training with a Hugging Face-compatible trainer. Models can be configured to run either classification (sequence-level prediction) or causal (next-token prediction) tasks. All logic is modular, enabling consistent handling of diverse model types and datasets.
+## Fine-tuning & Inference Classification Module
 
-### Classes
+This module contains the core components used to fine-tune large language models (LLMs) for classification tasks (e.g., `safety` or `cluster`) and perform inference using the fine-tuned adapters.
+
+It supports:
+- Multiple model families: **LLaMA 3**, **Mistral**, **Phi**
+- Two training modes:
+  - **Classification head fine-tuning** (`model_type: classification`)
+  - **Causal LM-style prompt learning** (`model_type: causal`)
+
+Fine-tuning uses **LoRA (Low-Rank Adaptation)** via Hugging Face PEFT for efficient training.
+
+---
+
+## 🏋️ Fine-tuning Workflow
+
+The fine-tuning process includes:
+- Dataset formatting using model/task-specific prompt formatters
+- LoRA adapter configuration
+- Hugging Face-compatible training
+- Optional weighted loss for class imbalance
+
+---
+
+### 📦 Classes
 
 #### 1. `BaseTrainer`
-- **Purpose**: Provides shared logic for fine-tuning LLMs.
-- **Description**: Abstracts model loading, tokenizer preparation, dataset formatting, and PEFT adapter integration. Handles training configurations and sets up the model for either classification or causal tasks.
-- **Usage**: Inherited by `GenericTrainer` to perform task-specific fine-tuning.
+- Sets up model, tokenizer, dataset formatting, and LoRA integration.
+- Base class for reusable fine-tuning logic.
 
 #### 2. `GenericTrainer(BaseTrainer)`
-- **Purpose**: Fine-tunes LLMs using a provided prompt formatter and configuration.
-- **Description**: Implements the `train()` method using Hugging Face's `SFTTrainer`. Prepares tokenized datasets, loads LoRA adapters, and handles metrics/logging. Supports both classification and causal fine-tuning.
-- **Usage**: Called in `finetune.py` to launch the training run.
+- Implements `train()` using Hugging Face `SFTTrainer`.
+- Handles task-specific prompt formatting and LoRA injection.
+- Used in `finetune.py`.
 
 #### 3. `WeightedLossTrainer(SFTTrainer)`
-- **Purpose**: Custom Hugging Face trainer that supports weighted loss for imbalanced classification.
-- **Description**: Overrides `compute_loss()` to apply class weights in `CrossEntropyLoss`, helping balance the loss when classes (e.g., Safe/Unsafe) are uneven.
-- **Usage**: Automatically used when `use_weighted_loss=True` is set in the config.
+- Custom `Trainer` that supports class-weighted loss via `CrossEntropyLoss`.
+- Applied when `use_weighted_loss=True`.
 
 #### 4. `BasePromptFormatter`
-- **Purpose**: Defines the interface for generating prompts and labels.
-- **Description**: Abstract base class implemented by all prompt formatters. Requires `format_example()` and `get_label()` methods.
-- **Usage**: Inherited by all model-specific formatters (e.g., `LlamaSafetyPromptFormatter`, `MistralTopicPromptFormatter`).
+- Abstract class defining `format_example()` and `get_label()` interface.
+- Extended by all task/model-specific formatters.
 
-#### 5. `LlamaSafetyPromptFormatter`, `LlamaTopicPromptFormatter`, `MistralSafetyPromptFormatter`, etc.
-- **Purpose**: Format input examples for a specific model, task, and type.
-- **Description**: Each class extends `BasePromptFormatter` and implements prompt construction and label logic for either `classification` or `causal` tasks, and for `safety` or `cluster`.
-- **Usage**: Selected automatically in `finetune.py` or `inference.py` using the `FORMATTER_REGISTRY`.
+#### 5. Model-Specific Prompt Formatters
+
+Each model (`mistral`, `llama3`, `phi`) has dedicated prompt formatters for every task (`safety`, `cluster`) and model type (`causal`, `classification`). These formatters inherit from `BasePromptFormatter` and define how examples are transformed into prompt-label pairs.
+
+They are selected dynamically from the `FORMATTER_REGISTRY` based on:
+- `model_id` (e.g., `"llama3"`)
+- `task` (e.g., `"safety"`)
+- `model_type` (e.g., `"classification"`)
+
+#### 🔁 Registered Formatters:
+
+| Model     | Task     | Model Type       | Formatter Class                              |
+|-----------|----------|------------------|-----------------------------------------------|
+| `mistral` | `safety` | `causal`         | `MistralSafetyPromptFormatterCausal`         |
+|           |          | `classification` | `MistralSafetyPromptFormatterClassification` |
+|           | `cluster`| `causal`         | `MistralTopicPromptFormatterCausal`          |
+|           |          | `classification` | `MistralTopicPromptFormatterClassification`  |
+| `llama3`  | `safety` | `causal`         | `LlamaSafetyPromptFormatterCausal`           |
+|           |          | `classification` | `LlamaSafetyPromptFormatterClassification`   |
+|           | `cluster`| `causal`         | `LlamaTopicPromptFormatterCausal`            |
+|           |          | `classification` | `LlamaTopicPromptFormatterClassification`    |
+| `phi`     | `safety` | `causal`         | `PhiSafetyPromptFormatterCausal`             |
+|           |          | `classification` | `PhiSafetyPromptFormatterClassification`     |
+|           | `cluster`| `causal`         | `PhiTopicPromptFormatterCausal`              |
+|           |          | `classification` | `PhiTopicPromptFormatterClassification`      |
+
+
+#### ⚠️ Notes: 
+- Phi Causal is not used!!!!!!
 
 #### 6. `BaseInference`
-- **Purpose**: Provides shared logic for inference on fine-tuned models.
-- **Description**: Handles model/tokenizer loading, LoRA adapter application, and batching. Provides utility for tokenizing and decoding model outputs.
-- **Usage**: Inherited by `GenericInference`.
+- Handles loading models, LoRA adapters, and batching logic for evaluation.
+- Base class for reusable inference logic.
 
 #### 7. `GenericInference(BaseInference)`
-- **Purpose**: Performs inference on a given dataset using a loaded model and prompt formatter.
-- **Description**: Applies formatting to test samples, runs predictions using the correct model head, and returns predicted and reference labels.
-- **Usage**: Called in `inference.py` to generate predictions and evaluate results.
+- Performs full evaluation using tokenized test data.
+- Applies formatting, runs inference, and returns predictions/labels.
+- Called by `inference.py`.
 
+---
 
-### Functions
+## 🛠️ Key Functions
 
 #### 1. `save_full_config(cfg: DictConfig, output_dir: str)`
-- **Purpose**: Saves the full configuration used for training or inference.
-- **Description**: Dumps the Hydra config object to a YAML file for reproducibility.
-- **Usage**: Called in both `finetune.py` and `inference.py`.
+- Saves complete config as `.yaml` for reproducibility.
 
-#### 2. `get_tokenized_dataset(tokenizer, dataset: DatasetDict, formatter: BasePromptFormatter, cfg: DictConfig) -> DatasetDict`
-- **Purpose**: Prepares tokenized dataset using task-specific formatting.
-- **Description**: Applies prompt formatting and tokenization for training or inference. Supports filtering invalid samples.
-- **Usage**: Used in `BaseTrainer` and `BaseInference` to prepare data.
+#### 2. `get_tokenized_dataset(...) -> DatasetDict`
+- Tokenizes and formats a Hugging Face `DatasetDict` using the selected formatter.
+- Filters out invalid examples if needed.
 
 #### 3. `load_model_and_tokenizer(cfg: DictConfig)`
-- **Purpose**: Loads model and tokenizer using configuration.
-- **Description**: Selects the correct base model from `cfg.model_map`, applies quantization if needed, and sets up tokenizer.
-- **Usage**: Called inside `BaseTrainer` and `BaseInference`.
+- Loads the base model and tokenizer from `cfg.model_map`.
+- Applies quantization and prepares the tokenizer.
 
 #### 4. `get_peft_config(cfg: DictConfig) -> LoraConfig`
-- **Purpose**: Returns the LoRA adapter configuration for PEFT.
-- **Description**: Builds a `LoraConfig` object with user-specified rank, alpha, dropout, and task type.
-- **Usage**: Used in `BaseTrainer` to wrap the model for PEFT.
+- Returns a configured LoRA adapter object for PEFT integration.
 
 #### 5. `compute_metrics(eval_pred)`
-- **Purpose**: Calculates evaluation metrics from model predictions.
-- **Description**: Converts label IDs to strings, computes accuracy, precision, recall, and F1 using `sklearn`.
-- **Usage**: Passed to `SFTTrainer` for metric logging.
+- Computes accuracy, precision, recall, and F1 using `sklearn.metrics`.
 
-#### 6. `save_confusion_matrix(references, predictions, labels, output_dir)`
-- **Purpose**: Saves a visual confusion matrix plot.
-- **Description**: Uses `seaborn` to generate a heatmap and saves it to the `pic/` folder of the output directory.
-- **Usage**: Called in `inference.py` after evaluation.
+#### 6. `save_confusion_matrix(...)`
+- Plots and saves a confusion matrix as a PNG using `seaborn`.
 
-#### 7. `get_prompt_formatter(model_id: str, task: str, model_type: str) -> BasePromptFormatter`
-- **Purpose**: Dynamically retrieves the correct formatter class.
-- **Description**: Looks up the formatter in the `FORMATTER_REGISTRY` using model ID, task, and model type.
-- **Usage**: Called in both `finetune.py` and `inference.py`.
+#### 7. `get_prompt_formatter(model_id, task, model_type) -> BasePromptFormatter`
+- Dynamically selects the correct prompt formatter from `FORMATTER_REGISTRY`.
+
+---
+
+This modular structure ensures a clean separation between model logic, formatting strategy, and training/inference mechanics. It makes it easy to extend the pipeline to new tasks or LLM architectures.

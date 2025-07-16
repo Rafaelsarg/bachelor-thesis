@@ -3,15 +3,15 @@
 # =============================
 
 task: "cluster"                     # "safety" or "cluster"
-model_id: "llama3"                 # "llama3", "mistral", or "phi"
+model_id: "mistral"                 # "llama", "mistral", or "phi"
 model_type: "classification"       # "classification" or "causal"
 sequence_length: 512
 
 # This must match the name of the fine-tuned run (check your output_dir from training)
-run_name: "llama3-cluster-classification-lr2e-05-bs16-20250715_182741"
+run_name: "mistral-cluster-classification-lr2e-05-bs6-20250716_140823"
 
 # Hugging Face Token (insert your own if needed)
-hf_token: "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"
+hf_token: ""
 
 # =============================
 #  INTERNAL CONFIG (NO CHANGE NEEDED)
@@ -19,7 +19,7 @@ hf_token: "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"
 
 model_map:
   mistral: "mistralai/Mistral-7B-Instruct-v0.2"
-  llama3: "meta-llama/Meta-Llama-3-8B-Instruct"
+  llama: "meta-llama/Meta-Llama-3-8B-Instruct"
   phi: "microsoft/Phi-3-mini-4k-instruct"
 
 dataset_map:

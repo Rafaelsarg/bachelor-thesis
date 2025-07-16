@@ -33,7 +33,7 @@ lora_config:
   dropout: 0.05
 
 # Hugging Face Token (insert your own if needed)
-hf_token: "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"
+hf_token: ""
 
 # =============================
 # ⚙️  INTERNAL CONFIG (NO CHANGE NEEDED)
@@ -45,7 +45,7 @@ tags: ["${model_id}", "${task}", "qlora", "lora"]
 
 model_map:
   mistral: "mistralai/Mistral-7B-Instruct-v0.2"
-  llama3: "meta-llama/Meta-Llama-3-8B-Instruct"
+  llama: "meta-llama/Meta-Llama-3-8B-Instruct"
   phi: "microsoft/Phi-3-mini-4k-instruct"
 
 dataset_config:

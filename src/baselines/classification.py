@@ -97,7 +97,7 @@ def get_classifier(clf_name, clf_params, verbose=False, multi_class=False):
     classifiers = {
         "lr": LogisticRegression(),
         "nb": ComplementNB(),
-        "svm": SVC(decision_function_shape="ovr" if multi_class else "auto"),
+        "svm": SVC(decision_function_shape="ovr" if multi_class else "ovo"),
         "rf": RandomForestClassifier()
     }
 

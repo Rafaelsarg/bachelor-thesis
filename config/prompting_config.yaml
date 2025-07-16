@@ -2,9 +2,9 @@
 #  USER-EDITABLE PARAMETERS
 # =============================
 
-model: "mistral"                     # Choices: "llama", "mistral", or "phi"
-task: "safety"                    # Choices: "safety" or "cluster"
-prompt: "zero_shot"                 # Choices: "zero_shot", "few_shot", or "custom" (custom only for cluster)
+model: "llama"                     # Choices: "llama", "mistral", or "phi"
+task: "cluster"                    # Choices: "safety" or "cluster"
+prompt: "few_shot"                 # Choices: "zero_shot", "few_shot", or "custom" (custom only for cluster)
 
 # =============================
 #  DO NOT CHANGE BELOW
