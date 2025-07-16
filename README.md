@@ -85,7 +85,16 @@ bachelor-thesis/
 
 Each module and script is designed to be self-contained and reusable. The Hydra configuration system is used to cleanly manage all hyperparameters, model types, and dataset paths.
 
----
+# Dataset
+
+The `data/` directory is where all the datasets for this project are stored.
+
+Inside `data/`, you'll find a `processed` subdirectory. This `processed` directory contains datasets that have already been prepared and are in the Hugging Face (`.hf`) format.
+
+Specifically, within `processed`, you'll see:
+
+* **`cluster-dataset-70-25-5.hf`**: This is the processed dataset used for the "cluster" classification task. The numbers "70-25-5" refer to the split percentages for training, testing and validation data, respectively.
+* **`safety-dataset-90-5-5.hf`**: This is the processed dataset used for the "safety" classification task. Similarly, "90-5-5" indicates the training, testing and validation data split.
 
 # Setup and Installation
 
