@@ -304,42 +304,42 @@ The `src/baselines/classification.py` module provides a text classification pipe
 
 ## Functions
 
-### 1. `clean_text_bow_tfidf(text: str) -> str`
+#### 1. `clean_text_bow_tfidf(text: str) -> str`
 - **Purpose**: Preprocesses text for BoW or TF-IDF vectorizers.
 - **Description**: Converts text to lowercase, removes digits and punctuation, tokenizes, removes stopwords, and applies lemmatization. Returns cleaned text as a string.
 - **Usage**: Used for `vectorizer_type="bow"` or `"tfidf"` to prepare text for traditional feature extraction.
 
-### 2. `clean_text_embeddings(text: str) -> str`
+#### 2. `clean_text_embeddings(text: str) -> str`
 - **Purpose**: Minimally preprocesses text for embedding-based models.
 - **Description**: Applies only lowercasing to retain semantic structure suitable for Word2Vec or Sentence-BERT embeddings.
 - **Usage**: Used for `vectorizer_type="word2vec"` or `"sentence_bert"`.
 
-### 3. `process_struggle_response_pair(text: str) -> str`
+#### 3. `process_struggle_response_pair(text: str) -> str`
 - **Purpose**: Extracts struggle and response from text for safety classification.
 - **Description**: Parses text in the format `<struggle> #label# <response> #END#` using regex, returning a combined string or `None` if invalid.
 - **Usage**: Applied when `task_type="safety"` to process struggle-response pairs.
 
-### 4. `preprocess_data(dataset_path: str, vectorizer_type: str, task_type: str, verbose: bool = False) -> tuple`
+#### 4. `preprocess_data(dataset_path: str, vectorizer_type: str, task_type: str, verbose: bool = False) -> tuple`
 - **Purpose**: Loads and preprocesses a dataset for classification.
 - **Description**: Loads a `DatasetDict`, applies appropriate text cleaning based on `vectorizer_type` and `task_type`, and encodes labels as integers. For `task_type="safety"`, converts N/Y labels to Unsafe/Safe. Returns training/test features, labels, and a label mapping dictionary.
 - **Usage**: Prepares data for the classification pipeline.
 
-### 5. `get_vectorizer(vectorizer_type: str, params: dict, sentence_bert_model: str = None, word2vec_path: str = None, verbose: bool = False) -> Transformer`
+#### 5. `get_vectorizer(vectorizer_type: str, params: dict, sentence_bert_model: str = None, word2vec_path: str = None, verbose: bool = False) -> Transformer`
 - **Purpose**: Initializes a vectorizer based on the specified type.
 - **Description**: Creates a `CountVectorizer` (BoW), `TfidfVectorizer` (TF-IDF), `Word2VecVectorizer`, or `SentenceBERTVectorizer` with provided parameters or model paths.
 - **Usage**: Sets up the vectorizer for the pipeline based on configuration.
 
-### 6. `get_classifier(clf_name: str, clf_params: dict, verbose: bool = False, multi_class: bool = False) -> tuple`
+#### 6. `get_classifier(clf_name: str, clf_params: dict, verbose: bool = False, multi_class: bool = False) -> tuple`
 - **Purpose**: Initializes a classifier and its hyperparameter grid.
 - **Description**: Creates a classifier (Logistic Regression, ComplementNB, SVM, or Random Forest) and defines its grid search parameters. Configures SVM for multi-class if needed.
 - **Usage**: Sets up the classifier for the pipeline.
 
-### 7. `save_results(results: dict, results_dir: str, filename: str)`
+#### 7. `save_results(results: dict, results_dir: str, filename: str)`
 - **Purpose**: Saves classification results to a JSON file.
 - **Description**: Writes a dictionary containing metrics and parameters to a JSON file in `results_dir`.
 - **Usage**: Stores evaluation results and best parameters for analysis.
 
-### 8. `run_pipeline(X_train, X_test, y_train, y_test, vectorizer_type: str, vectorizer_params: dict, clf_name: str, clf_params: dict, task_type: str, results_dir: str, feature_selection_cfg: dict = None, word2vec_path: str = None, sentence_bert_model: str = None, verbose: bool = False) -> tuple`
+#### 8. `run_pipeline(X_train, X_test, y_train, y_test, vectorizer_type: str, vectorizer_params: dict, clf_name: str, clf_params: dict, task_type: str, results_dir: str, feature_selection_cfg: dict = None, word2vec_path: str = None, sentence_bert_model: str = None, verbose: bool = False) -> tuple`
 - **Purpose**: Executes the full classification pipeline.
 - **Description**: Builds a scikit-learn pipeline with a vectorizer, optional feature selection (for BoW/TF-IDF with Logistic Regression or SVM), and a classifier. Performs grid search, evaluates the model, saves results as JSON, and generates a confusion matrix plot. Returns the best estimator and parameters.
 - **Usage**: Core function to train and evaluate models, called by `run_baselines.py`.
