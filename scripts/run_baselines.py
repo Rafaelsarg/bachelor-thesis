@@ -17,8 +17,7 @@ def main(cfg: DictConfig):
     """
 
     # -------- DISPLAY CONFIGURATION --------
-    print("Loaded Configuration:")
-    print(OmegaConf.to_yaml(cfg))
+    print("Loaded Configuration")
     
     # -------- CONVERT TO SERIALIZABLE DICT --------
     config_dict = OmegaConf.to_container(cfg, resolve=True)

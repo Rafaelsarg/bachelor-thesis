@@ -163,7 +163,9 @@ The baseline workflow trains and evaluates traditional machine learning models f
 - **Entry Point**: `scripts/run_baselines.py`
   - Main script that loads configurations, preprocesses data, and runs the classification pipeline.
 - **Core Logic**: `src/baselines/classification.py`
-  - Implements text preprocessing, vectorization, model training with grid search, and result visualization.
+  - Implements vectorization, model training with grid search, and result visualization.
+- **Text Processor**: `src/baselines/data_processor.py`
+  - Implements text preprocessing
 - **Configuration File**: `config/baseline_config.yaml`
   - Defines task type, dataset path, vectorizer, classifier, and grid search parameters.
 
@@ -174,19 +176,17 @@ You can execute baseline experiments in two ways:
    - Specify configuration values directly in the command line for quick experiments without modifying the YAML file.
    - Example (basic override):
      ```bash
-     python scripts/run_baselines.py task=cluster vectorizer.type=word2vec classifier.type=lr
+     python scripts/run_baselines.py task=cluster vectorizer.type=bow classifier.type=lr
      ```
    - Example (with hyperparameter overrides):
      ```bash
-     python scripts/run_baselines.py \
-       task=cluster \
-       vectorizer.type=tfidf \
-       vectorizer.grid_params.max_features=10000 \
-       vectorizer.grid_params.min_df=1 \
-       vectorizer.grid_params.ngram_range="[(1,2)]" \
-       classifier.type=svm \
-       classifier.grid_params.svm.C=1 \
-       classifier.grid_params.svm.kernel=linear
+     python scripts/run_baselines.py   task=cluster   vectorizer.type=tfidf   \
+      vectorizer.grid_params.max_features=[10000]   \
+      vectorizer.grid_params.min_df=[1]  \
+      vectorizer.grid_params.ngram_range=[[1,1]]   \
+      classifier.type=svm  \
+      classifier.grid_params.svm.C=[1] \
+      classifier.grid_params.svm.kernel=[linear]
      ```
    - **Note**: Command-line overrides are ideal for small changes but can become cumbersome for extensive modifications.
 
@@ -396,7 +396,7 @@ Ensure the Ollama server is running locally (`ollama serve`) before executing th
    - **Advantage**: Simplifies managing detailed settings, especially for few-shot examples or custom prompting.
 
 ## Outputs
-- **Results**: JSON file with input text, true labels, and predicted labels, saved in `output_directory` (e.g., `<model>_<prompt>.json`).
+- **Results**: JSON file with input text, true labels, and predicted labels, saved in `results/prompting/safety/${prompt}/${model}` or `results/prompting/cluster/${prompt}/${model}` .
 - **Metrics**: JSON file with evaluation metrics (e.g., F1-score, accuracy), saved as `<model>_<prompt>_metrics.json`.
 - **Visualizations**: Confusion matrix plot saved as `<model>_<prompt>_confusion_matrix.png`.
 
@@ -560,11 +560,16 @@ python scripts/run_finetuning.py model_id=llama3 task=cluster model_type=classif
 ```
 
 ```bash
-# Fine-tune Phi-3-mini on safety classification using standard loss and custom learning rate
-python scripts/run_finetuning.py model_id=phi task=safety sft_config.loss_function=standard sft_config.lr=1e-5
+# Fine-tune Mistral-7B on safety classification using standard loss and custom learning rate
+python scripts/run_finetuning.py model_id=mistral task=safety  model_type=classification sft_config.loss_function=standard sft_config.lr=1e-5
 ```
 
-> ✅ **Note:** All other values will still be taken from the YAML file unless explicitly overridden in the command line.
+#### ⚠️ Notes:
+- The `loss_function` is **only applied** when `model_type=classification`.  
+  It is **ignored** for `model_type=causal`.
+- `model_id=phi` **does not support** `model_type=classification` and must be used with `model_type=causal`.
+
+> **Note:** All other values will still be taken from the YAML file unless explicitly overridden in the command line.
 
 ### 2. 🛠 **Using the YAML Configuration**
 
@@ -615,7 +620,11 @@ You must provide the same model configuration and `run_name` that was used durin
 - `task`: `"safety"` or `"cluster"`
 - `model_id`: `"llama3"`, `"mistral"`, or `"phi"`
 - `model_type`: `"classification"` or `"causal"`
+- `sequence_length`: default set to `512`
 - `run_name`: the full name of the run folder created during training
+
+> ⚠️ **Important:** These parameters **must match exactly** the configuration used during training.  
+> Using different `task`, `model_id`, or `model_type` will result in incompatibility with the saved adapter weights and may lead to failure or incorrect inference results.
 
 ### Example Command
 
