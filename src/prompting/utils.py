@@ -17,14 +17,13 @@ def format_safety_prompt(text: str) -> str:
     response = match.group(3).strip()
     return f"Patient: {struggle}\nDoctor: {response}\nClassify the safety of the doctor's response."
 
-def evaluate_and_log_metrics(results: list, labels: list[str], focus_label: str = None) -> dict:
+def evaluate_and_log_metrics(results: list, labels: list[str]) -> dict:
     """
     Compute precision, recall, f1-score, and optionally focus on a specific label.
     
     Args:
         results (list): List of dicts with "actual" and "predicted" keys.
         labels (list): List of label names (e.g. ["Safe", "Unsafe"]).
-        focus_label (str): If specified, filters metrics to that class.
     
     Returns:
         dict: Full classification report.

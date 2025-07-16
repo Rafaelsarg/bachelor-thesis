@@ -9,70 +9,20 @@ import sys
 # === Adjust import path for src/ ===
 sys.path.append("src")
 
-from prompting.ollama_prompting import OllamaPrompting
+from prompting.ollama_prompting import OllamaPrompting, run_custom_prompt
 from prompting.utils import format_safety_prompt, evaluate_and_log_metrics, save_confusion_matrix
 
-def run_custom_prompt(prompter, user_input: str, prompt_config: dict) -> str | None:
-    """
-    Run 4-step narrowing classification using predefined definition groups.
-    Returns the final selected label or None if the flow breaks at any step.
-    """
-    # -------------- Load prompt config --------------
-    system_prompt = prompt_config["system_prompt"]
-    definitions = prompt_config["definitions"]
-    groups = prompt_config["groups"]
-
-    selected = []
-
-    # -------------- Step 1–3: Predict one label from each group --------------
-    for step, group in enumerate(groups[:3], 1):
-        prediction = _predict_from_group(prompter, user_input, system_prompt, group, definitions)
-
-        if prediction not in group:
-            print(f"[!] Step {step}: Invalid prediction '{prediction}' not in group {group}")
-            return 'Misclassified'
-
-        selected.append(prediction)
-
-    # -------------- Step 4: Final decision from previous selections + 1 remaining --------------
-    remaining = [label for label in groups[3] if label not in selected]
-    final_group = selected + (remaining[:1] if remaining else [])
-
-    prediction = _predict_from_group(prompter, user_input, system_prompt, final_group, definitions)
-
-    if prediction not in final_group:
-        print(f"[!] Final step: Invalid prediction '{prediction}' not in final group {final_group}")
-        return 'Misclassified'
-
-    return prediction
-
-
-def _predict_from_group(prompter, user_input: str, system_prompt: str, group: list[str], definitions: dict) -> str:
-    """
-    Build prompt from definitions, send to model, return uppercase prediction.
-    """
-    # -------------- Format prompt with definitions for this group --------------
-    descs = {label: definitions[label] for label in group}
-    prompt_text = build_group_prompt(user_input, descs)
-
-    # -------------- Build message sequence and query Ollama model --------------
-    messages = prompter.build_custom_prompt(system_prompt, prompt_text, {"text": ""})
-    return prompter.send_prompt_to_model(messages).strip().upper()
-
-def build_group_prompt(user_input: str, label_definitions: dict) -> str:
-    """
-    Builds a prompt using square-bracketed input and a list of category definitions.
-    """
-    label_list = "\n".join([f"{label}: {desc}" for label, desc in label_definitions.items()])
-    return f"[{user_input}]\n\n{label_list}"
 
 @hydra.main(config_path="../config", config_name="prompting_config", version_base=None)
 def main(cfg: DictConfig):
+    # Ensure custom prompting is not used for safety task
+    if cfg.task == 'safety' and cfg.prompt == 'custom':
+        raise ValueError("Custom prompting is not supported for safety task. Use zero_shot or few_shot instead.")
+
     # ------------ Configuration ------------
     dataset_cfg = OmegaConf.to_container(cfg.dataset_config, resolve=True)
     prompts_dir = cfg.prompts_path[cfg.task]
     output_dir = cfg.output_directory[cfg.task]
-    os.makedirs(output_dir, exist_ok=True)
 
     # ------------ Load Data ------------
     data = DatasetDict.load_from_disk(dataset_cfg['dataset_path'])['test']    
@@ -115,8 +65,14 @@ def main(cfg: DictConfig):
         else:
             raise ValueError(f"Unsupported prompt type: {cfg.prompt}")
 
+
+        if cfg.task == "safety":
+            label_map = {"Y": "safe", "N": "unsafe"}
+            actual = label_map[actual]
+            predicted = predicted.lower()  # Ensure predicted is lowercase for consistency
+            
         results.append({
-            "input": input_text,
+            "struggle": input_text,
             "actual": actual,
             "predicted": predicted
         })
@@ -126,13 +82,16 @@ def main(cfg: DictConfig):
         print(f"Predicted: {predicted}\n")
 
     # ------------ Save Results ------------
+    os.makedirs(output_dir, exist_ok=True)
     output_file = os.path.join(output_dir, f"{cfg.model}_{cfg.prompt}.json")
     with open(output_file, "w") as f:
         json.dump(results, f, indent=2)
     
-    # Evaluate and log metrics
+    # ------------ Evaluate and log metrics ------------
     label_names = cfg.label_names[cfg.task]
-    metrics = evaluate_and_log_metrics(results, labels=label_names, focus_label="Unsafe" if cfg.task == "safety" else None)
+    metrics = evaluate_and_log_metrics(results, labels=label_names)
+
+    # Save metrics to a JSON file
     with open(os.path.join(output_dir, f"{cfg.model}_{cfg.prompt}_metrics.json"), "w") as f:
         json.dump(metrics, f, indent=2)
 

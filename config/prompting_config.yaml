@@ -2,9 +2,9 @@
 #  USER-EDITABLE PARAMETERS
 # =============================
 
-model: "llama"                     # Choices: "llama", "mistral", or "phi"
-task: "cluster"                    # Choices: "safety" or "cluster"
-prompt: "few_shot"                 # Choices: "zero_shot", "few_shot", or "custom" (custom only for cluster)
+model: "mistral"                     # Choices: "llama", "mistral", or "phi"
+task: "safety"                    # Choices: "safety" or "cluster"
+prompt: "zero_shot"                 # Choices: "zero_shot", "few_shot", or "custom" (custom only for cluster)
 
 # =============================
 #  DO NOT CHANGE BELOW
@@ -28,11 +28,11 @@ prompts_path:
   cluster: "src/prompting/prompts/cluster_prompts.json"
 
 output_directory:
-  safety: "results/safety/${prompt}/${model}"
-  cluster: "results/cluster/${prompt}/${model}"
+  safety: "results/prompting/safety/${prompt}/${model}"
+  cluster: "results/prompting/cluster/${prompt}/${model}"
 
 label_names:
-  safety: ["Unsafe", "Safe"]
+  safety: ["unsafe", "safe"]
   cluster: 
     - "DIET_PLAN_ISSUES"
     - "SOCIAL"

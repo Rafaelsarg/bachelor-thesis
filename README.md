@@ -2,23 +2,19 @@
 
 This repository contains the codebase developed for thesis experiments involving dietary topic classification and safety assessment of AI-generated nutrition counseling.
 
----
 
 # 📋 Table of Contents
 
-
 - [Prerequisites](#prerequisites)
 - [Project Structure](#project-structure)
-- [Setup and Installation](#setup-and-installation)
-- [Running the Main Scripts](#running-the-main-scripts)
-- [Running Baseline Models](#running-baseline-models)
-- [Prompting with Ollama](#prompting-with-ollama)
-- [Fine-Tuning LLMs](#fine-tuning-llms)
-- [Inference](#inference)
-- [Output Directory Format](#️output-directory)
+- [Dataset](#dataset)
+- [Running Baseline Experiments](#running-baseline-experiments)
+- [Baseline Configuration Explained](#baseline-configuration-explained)
+- [Baseline Classification Module](#baseline-classification-module)
+- [Running Prompting Experiments](#running-prompting-experiments)
+- [Prompting Configuration Explained](#prompting-configuration-explained)
+- [Prompting Classification Module](#prompting-classification-module)
 
-
----
 
 # Prerequisites
 
@@ -355,3 +351,111 @@ The `src/baselines/classification.py` module provides a text classification pipe
 
 ## Usage
 The module is used within a classification pipeline configured via `config/baseline_config.yaml` and executed by `scripts/run_baselines.py`. It processes a `DatasetDict` with train/test splits, applies text preprocessing, vectorizes data, trains a model, and saves results.
+
+# Running Prompting Experiments
+
+## Overview
+The prompting workflow uses local LLMs via Ollama for text classification tasks (e.g., safety or clustering) with zero-shot, few-shot, or custom prompting strategies. It is configured via `config/prompting_config.yaml` and executed through `scripts/run_prompting.py`, which leverages the `OllamaPrompting` class and utilities in `src/prompting/ollama_prompting.py`.
+
+## Components
+- **Entry Point**: `scripts/run_prompting.py`
+  - Loads configuration, processes test data, sends prompts to the Ollama model, and saves results.
+- **Core Logic**: `src/prompting/ollama_prompting.py`
+  - Implements the `OllamaPrompting` class for prompt construction and model interaction, plus custom prompting functions.
+- **Configuration File**: `config/prompting_config.yaml`
+  - Specifies task, prompt type, model, dataset, and prompt template paths.
+
+## Running the Script
+Ensure the Ollama server is running locally (`ollama serve`) before executing the script. You can run prompting experiments in two ways:
+
+1. **Using Command-Line Overrides**:
+   - Specify configuration values directly for quick experiments without editing the YAML file.
+   - Example (basic override):
+     ```bash
+     python scripts/run_prompting.py task=cluster prompt=zero_shot ollama_model=mistral:7b
+     ```
+   - Example (with prompt-specific overrides):
+     ```bash
+     python scripts/run_prompting.py \
+       task=safety \
+       prompt=few_shot \
+       ollama_model=llama3:8b \
+       dataset_config.dataset_path=data/processed/safety-dataset-90-5-5.hf
+     ```
+   - **Note**: Command-line overrides are suitable for small changes but can be unwieldy for complex configurations.
+
+2. **Using the YAML Configuration**:
+   - Edit `config/prompting_config.yaml` to set task, prompt type, model, dataset path, and prompt templates.
+   - Run the script without overrides:
+     ```bash
+     python scripts/run_prompting.py
+     ```
+   - **Advantage**: Simplifies managing detailed settings, especially for few-shot examples or custom prompting.
+
+## Outputs
+- **Results**: JSON file with input text, true labels, and predicted labels, saved in `output_directory` (e.g., `<model>_<prompt>.json`).
+- **Metrics**: JSON file with evaluation metrics (e.g., F1-score, accuracy), saved as `<model>_<prompt>_metrics.json`.
+- **Visualizations**: Confusion matrix plot saved as `<model>_<prompt>_confusion_matrix.png`.
+
+### Configuration Details
+For guidance on configuring `prompting_config.yaml`, refer to [Prompting Configuration Explained](#prompting-configuration-explained) in the full project documentation.
+
+# Prompting Configuration Explained
+
+The core of the experiment's setup is managed through the `prompting_config.yaml` file. This file uses Hydra for configuration management, allowing for a flexible and organized way to define parameters.
+
+## User-Editable Parameters
+
+At the top of the `prompting_config.yaml` file, you'll find the primary parameters you can change to control the prompting process:
+
+* **`model`**: Specifies the base LLM to use.
+    * **Choices**: `"llama"`, `"mistral"`, `"phi"`
+    * **How it works**: This key maps to a specific model identifier in the `ollama_models` section (e.g., `mistral` maps to `mistral:7b`).
+
+* **`task`**: Defines the classification task to be performed.
+    * **Choices**: `"safety"`, `"cluster"`
+    * **How it works**: This choice determines which dataset to load (from `dataset_config.dataset_map`), which prompt templates to use (from `prompts_path`), and where to save the results (in `output_directory`).
+
+* **`prompt`**: Selects the prompting strategy.
+    * **Choices**: `"zero_shot"`, `"few_shot"`, `"custom"`
+    * **Note**: The `"custom"` prompt is only available for the `"cluster"` task.
+    * **How it works**: This selects the specific prompt structure from the corresponding `.json` file (e.g., `safety_prompts.json`).
+
+## Dynamic Configuration
+
+The rest of the `prompting_config.yaml` file uses variable substitution (`${...}`) to dynamically create paths and select values based on your choices in the user-editable section. For example, if you set `task: safety`, the `dataset_path` automatically resolves to the path specified for `safety` in the `dataset_map`. This system ensures that all components (data, model, prompts, and output directories) are correctly aligned for the selected task and model without needing to manually change paths.
+
+# Prompting Classification Module
+
+The classification logic is primarily handled by two Python scripts: `ollama_prompting.py` and `run_prompting.py`.
+
+### `ollama_prompting.py`: The Core Prompting Engine
+
+This script contains the `OllamaPrompting` class, which is a wrapper for interacting with the Ollama API.
+
+* `__init__(self, model_name, system_instruction)`: Initializes the prompter with the specified Ollama model and a system-level instruction that sets the context for the AI.
+
+* `send_prompt_to_model(...)`: Takes a sequence of messages and sends them to the Ollama model, returning the model's response.
+
+* **Prompt Building Methods**:
+    * `build_zero_shot_prompt(...)`: Creates a simple prompt containing only the system instruction and the user's input text.
+    * `build_few_shot_prompt(...)`: Constructs a prompt that includes a system instruction, a few examples of input-output pairs, and then the user's input text. This helps the model understand the desired format and task better.
+    * `build_custom_prompt(...)`: Used for more complex scenarios. It assembles a prompt with a custom system instruction and contextual examples.
+    * `run_custom_prompt(...)`: A specialized function for the `"cluster"` task. It performs a multi-step classification process, narrowing down the possible labels in stages to arrive at a final classification.
+
+### `run_prompting.py`: The Main Execution Script
+
+This script ties everything together using the configuration from `prompting_config.yaml`.
+
+* **Loads Configuration**: It uses Hydra to load the configuration, resolving all the dynamic paths and parameters.
+* **Loads Data**: It loads the appropriate test dataset based on the selected `task`.
+* **Pulls Model**: It ensures the specified Ollama model is available locally.
+* **Loads Prompts**: It reads the corresponding prompt template (`.json` file) for the chosen `task` and `prompt` strategy.
+* **Instantiates Prompter**: It creates an instance of the `OllamaPrompting` class.
+* **Executes Prompting Loop**: It iterates through each sample in the dataset and:
+    * Builds the appropriate prompt (zero-shot, few-shot, or custom).
+    * Sends the prompt to the model to get a prediction.
+    * Stores the input, actual label, and predicted label.
+* **Saves Results & Evaluates**:
+    * The results are saved to a `.json` file in the directory specified by the configuration.
+    * It calculates and saves performance metrics (like precision, recall, and F1-score) and a confusion matrix image.
