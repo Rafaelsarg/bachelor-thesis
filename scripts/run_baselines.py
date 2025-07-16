@@ -6,7 +6,8 @@ from omegaconf import DictConfig, OmegaConf
 # === Adjust import path for src/ ===
 sys.path.append("src")
 
-from baselines.classification import preprocess_data, run_pipeline
+from baselines.classification import run_pipeline
+from baselines.data_processor import preprocess_data
 
 # ------------------- Hydra Main Entry -------------------
 @hydra.main(config_path="../config", config_name="baseline_config", version_base=None)
@@ -37,7 +38,7 @@ def main(cfg: DictConfig):
 
     # -------- PREPROCESS DATA --------
     print(f"\n🔧 Preprocessing dataset: {dataset_path}")
-    X_train, X_test, y_train, y_test = preprocess_data(
+    X_train, X_test, y_train, y_test, label_mapping = preprocess_data(
         dataset_path=dataset_path,
         vectorizer_type=vectorizer_type,
         task_type=task_type,
@@ -51,6 +52,7 @@ def main(cfg: DictConfig):
         X_test=X_test,
         y_train=y_train,
         y_test=y_test,
+        label_mapping=label_mapping,
         vectorizer_type=vectorizer_type,
         vectorizer_params=vectorizer_params,
         clf_name=classifier_type,

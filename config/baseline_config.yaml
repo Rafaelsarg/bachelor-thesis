@@ -3,7 +3,7 @@
 # =============================
 task: "cluster"                            # Choices: "safety" or "cluster"
 vectorizer:
-  type: "word2vec"              # Choices: "bow", "tfidf", "word2vec" or "sentence_bert"
+  type: "tfidf"              # Choices: "bow", "tfidf", "word2vec" or "sentence_bert"
   grid_params:
     max_features: [5000, 10000]
     min_df: [1, 5]
@@ -15,11 +15,11 @@ classifier:
   type: "lr"                    # Choices: "lr", "nb", "svm", or "rf"
   grid_params:
     lr:
-      C: [0.01, 0.1, 1]
+      C: [0.01, 0.1, 0.5, 1]
       solver: ["liblinear", "saga"]
       max_iter: [300, 1000]
       feature_selection:
-        enabled: false
+        enabled: true
         k: 1000
     nb:
       alpha: [0.1, 1]
