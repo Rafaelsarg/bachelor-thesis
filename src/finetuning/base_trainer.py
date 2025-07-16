@@ -115,7 +115,7 @@ class BaseTrainer(ABC):
         # Load the base causal or classification language model with quantization applied.
         # `device_map="auto"` allows Hugging Face to assign the model to available GPU(s).
         # `trust_remote_code=True` is necessary for some custom model architectures.
-        if self.model_type == "casual":
+        if self.model_type == "causal":
             model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
                 quantization_config=bnb_config,

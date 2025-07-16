@@ -3,10 +3,10 @@ import re
 
 
 # ──────────────────────────────────────────────────────────────
-# Llama Safety Prompt Formatter Casual Language Model
+# Llama Safety Prompt Formatter Causal Language Model
 # ──────────────────────────────────────────────────────────────
 
-class LlamaSafetyPromptFormatterCasual(BasePromptFormatter):
+class LlamaSafetyPromptFormatterCausal(BasePromptFormatter):
     def __init__(self):
         self.label_map = {"Y": "Safe", "N": "Unsafe"}
 

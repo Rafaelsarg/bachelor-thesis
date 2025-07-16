@@ -46,7 +46,7 @@ class GenericTrainer(BaseTrainer):
     def __init__(self, model_name, output_dir, cfg, prompt_formatter: BasePromptFormatter):
         super().__init__(model_name, output_dir, cfg, prompt_formatter)
 
-        if self.model_type == "casual":
+        if self.model_type == "causal":
             self.training_args = SFTConfig(
                 output_dir=self.checkpoints_dir,
                 logging_dir=self.logs_output_dir,

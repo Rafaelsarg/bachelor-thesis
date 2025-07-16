@@ -3,10 +3,10 @@ import re
 
 
 # ──────────────────────────────────────────────────────────────
-# Mistral Safety Prompt Formatter Casual Language Model
+# Mistral Safety Prompt Formatter Causal Language Model
 # ──────────────────────────────────────────────────────────────
 
-class MistralSafetyPromptFormatterCasual(BasePromptFormatter):
+class MistralSafetyPromptFormatterCausal(BasePromptFormatter):
     def __init__(self):
         self.label_map = {"Y": "Safe", "N": "Unsafe"}
 
@@ -90,7 +90,7 @@ Response: {response_text}
         return prompt
 
 # ──────────────────────────────────────────────────────────────
-# Mistral Topic Prompt Formatter Casual Language Model
+# Mistral Topic Prompt Formatter Causal Language Model
 # ──────────────────────────────────────────────────────────────
 
 class MistralTopicPromptFormatterCausal(BasePromptFormatter):

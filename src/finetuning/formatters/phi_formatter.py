@@ -3,10 +3,10 @@ import re
 
 
 # ──────────────────────────────────────────────────────────────
-# Phi Safety Prompt Formatter Casual Language Model
+# Phi Safety Prompt Formatter Causal Language Model
 # ──────────────────────────────────────────────────────────────
 
-class PhiSafetyPromptFormatterCasual(BasePromptFormatter):
+class PhiSafetyPromptFormatterCausal(BasePromptFormatter):
     def __init__(self):
         self.label_map = {"Y": "Safe", "N": "Unsafe"}
 
@@ -104,10 +104,10 @@ Response: {response}<|end|>
         return phi_prompt
         
 # ──────────────────────────────────────────────────────────────
-# Phi Topic Prompt Formatter Casual Language Model
+# Phi Topic Prompt Formatter Causal Language Model
 # ──────────────────────────────────────────────────────────────
 
-class PhiTopicPromptFormatterCasual(BasePromptFormatter):
+class PhiTopicPromptFormatterCausal(BasePromptFormatter):
     def format_prompt_training(self, struggle, label):
         """
         Formats training input for topic tasks.

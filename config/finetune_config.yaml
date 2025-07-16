@@ -5,14 +5,14 @@
 project_name: "Thesis - Safety Classification" # WanDB project name
 
 task: "cluster"                    # Choose "safety" or "cluster"
-model_id: "llama3"                # Choose from: "llama3", "phi", "mistral"
+model_id: "mistral"                # Choose from: "llama3", "phi", "mistral"
 model_type: "classification"      # "classification" or "causal"
 
 
 # Training hyperparameters (can be tuned)
 sft_config:
-  batch_size: 16               
-  epochs: 10              
+  batch_size: 6             
+  epochs: 3       
   lr: 2e-5                  
   evaluation_strategy: "epoch"
   gradient_accumulation_steps: 2  

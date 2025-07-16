@@ -28,7 +28,7 @@ class GenericInference(BaseInference):
         inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, padding=True).to(self.device)
 
         with torch.no_grad():
-            if self.model_type == "casual":
+            if self.model_type == "causal":
                 outputs = self.model.generate(**inputs, max_new_tokens=10)
                 decoded = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
                 return self._extract_prediction(decoded)

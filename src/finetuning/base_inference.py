@@ -19,6 +19,7 @@ class BaseInference(ABC):
             adapter_dir: str, 
             prompt_formatter,
             model_type: str,
+            sequence_length: int = 512,
             hf_token: str = None,
             label2id: dict = None,
             id2label: dict = None
@@ -44,7 +45,7 @@ class BaseInference(ABC):
             local_files_only=False
         )
         self.tokenizer.pad_token = self.tokenizer.eos_token
-        self.tokenizer.model_max_length = 512
+        self.tokenizer.model_max_length = sequence_length
         print("[✓] Tokenizer loaded")
 
         # Load quantized model base (QLoRA)
@@ -55,7 +56,7 @@ class BaseInference(ABC):
             bnb_4bit_use_double_quant=True
         )
 
-        if self.model_type == "casual":
+        if self.model_type == "causal":
             base_model = AutoModelForCausalLM.from_pretrained(
                 base_model_name,
                 device_map="auto",

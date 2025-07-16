@@ -15,20 +15,20 @@ sys.path.append("src")
 from finetuning.inference import GenericInference
 # Formatter imports
 from finetuning.formatters.llama_formatter import (
-    LlamaSafetyPromptFormatterCasual,
+    LlamaSafetyPromptFormatterCausal,
     LlamaTopicPromptFormatterCausal,
     LlamaSafetyPromptFormatterClassification,
     LlamaTopicPromptFormatterClassification,
 )
 from finetuning.formatters.mistral_formatter import (
-    MistralSafetyPromptFormatterCasual,
+    MistralSafetyPromptFormatterCausal,
     MistralTopicPromptFormatterCausal,
     MistralSafetyPromptFormatterClassification,
     MistralTopicPromptFormatterClassification,
 )
 from finetuning.formatters.phi_formatter import (
-    PhiSafetyPromptFormatterCasual,
-    PhiTopicPromptFormatterCasual,
+    PhiSafetyPromptFormatterCausal,
+    PhiTopicPromptFormatterCausal,
     PhiSafetyPromptFormatterClassification,
     PhiTopicPromptFormatterClassification,
 )
@@ -39,31 +39,31 @@ from finetuning.formatters.phi_formatter import (
 FORMATTER_REGISTRY = {
     "llama3": {
         "safety": {
-            "casual": LlamaSafetyPromptFormatterCasual,
+            "causal": LlamaSafetyPromptFormatterCausal,
             "classification": LlamaSafetyPromptFormatterClassification,
         },
         "cluster": {
-            "casual": LlamaTopicPromptFormatterCausal,
+            "causal": LlamaTopicPromptFormatterCausal,
             "classification": LlamaTopicPromptFormatterClassification,
         },
     },
     "mistral": {
         "safety": {
-            "casual": MistralSafetyPromptFormatterCasual,
+            "causal": MistralSafetyPromptFormatterCausal,
             "classification": MistralSafetyPromptFormatterClassification,
         },
         "cluster": {
-            "casual": MistralTopicPromptFormatterCausal,
+            "causal": MistralTopicPromptFormatterCausal,
             "classification": MistralTopicPromptFormatterClassification,
         },
     },
     "phi": {
         "safety": {
-            "casual": PhiSafetyPromptFormatterCasual,
+            "causal": PhiSafetyPromptFormatterCausal,
             "classification": PhiSafetyPromptFormatterClassification,
         },
         "cluster": {
-            "casual": PhiTopicPromptFormatterCasual,
+            "causal": PhiTopicPromptFormatterCausal,
             "classification": PhiTopicPromptFormatterClassification,
         },
     },
@@ -93,9 +93,6 @@ def save_confusion_matrix(references, predictions, labels, output_dir: str):
     plt.close()
     print(f"[✓] Confusion matrix saved at: {cm_path}")
 
-# ─────────────────────────────────────────────
-# Inference Runner
-# ─────────────────────────────────────────────
 @hydra.main(config_path="../config", config_name="inference_config", version_base=None)
 def main(cfg: DictConfig):
     base_model_name = cfg.model_map[cfg.model_id]
@@ -114,6 +111,7 @@ def main(cfg: DictConfig):
         adapter_dir=cfg.adapter_dir,
         prompt_formatter=formatter,
         model_type=cfg.model_type,
+        sequence_length=cfg.sequence_length,
         hf_token=cfg.hf_token,
         label2id=label2id,
         id2label=id2label
@@ -128,7 +126,7 @@ def main(cfg: DictConfig):
         references = [label_map.get(r, r) for r in references]
 
     # Generate classification report
-    report = classification_report(references, predictions, output_dict=True)
+    report = classification_report(references, predictions, output_dict=True, zero_division=0)
 
     # Save predictions
     with open(cfg.output_file, "w") as f:
