@@ -223,11 +223,11 @@ python scripts/run_prompting.py model=llama task=cluster prompt=custom
 ```bash
 python scripts/run_prompting.py model=llama task=safety prompt=few_shot
 ```
-> **Note:** prompt=custom can be used only when the task=cluster
+**Note:** prompt=custom can be used only when the task=cluster
 
 For details on prompt formatting and task-specific setup, see [Prompting Configuration Explained](#prompting-configuration-explained)
 
-**📂 Output Format**
+**Output Format**
 
 Results are saved to  
 `results/{task}/{prompt}/{model}/`
@@ -246,8 +246,43 @@ Files you will find there:
 
 ### 3. Fine-Tuning and Inference
 
+⚠️ **IMPORTANT** Fine-tuning models for safety classification can take 10-24 hours, while dietary topic classification can range from 1-3 hours depending on parameter choice. Large batch sizes can throw memeory erros, because of not enough VRAM. 
+
+### 🧪 Weights & Biases (W&B) Logging
+
+When you run fine-tuning or evaluation scripts, you may see the following prompt in the terminal:
+
+```
+wandb: (1) Create a W&B account
+wandb: (2) Use an existing W&B account
+wandb: (3) Don't visualize my results
+```
+
+
+#### What to do:
+
+- **Option 1**: Creates a new W&B account (you'll be redirected to a browser).
+- **Option 2**: If you already have a W&B API token or want to use one (e.g., a shared token), choose this. It will prompt you to paste your API key.
+- **Option 3**: Disables logging and just runs the script locally. Choose this if you don’t want W&B logs.
+
+> ✅ If you're not interested in logging, **choose option 3** and everything will run as expected.
+
+
 **Fine-Tuning Script**: `scripts/run_finetuning.py`  
 Fine-tunes an instruction-tuned model like LLaMA 3 or Mistral using QLoRA and Hugging Face PEFT.
+
+The fine-tuning setup is defined in `config/finetune_config.yaml`. The **three most important parameters** you may want to change are:
+
+```yaml
+task: "cluster"              # Choose "safety" or "cluster"
+model_id: "llama3"           # Choose from: "llama3", "phi", "mistral"
+model_type: "classification" # Choose "classification" or "causal"
+```
+
+These three control:
+- Which dataset will be used (`task`)
+- Which LLM is being fine-tuned (`model_id`)
+- Whether classification or causal modeling is used (`model_type`)
 
 **Example:**
 
@@ -255,18 +290,113 @@ Fine-tunes an instruction-tuned model like LLaMA 3 or Mistral using QLoRA and Hu
 python scripts/run_finetuning.py model_id=llama3 task=cluster model_type=classification
 ```
 
-**Inference Script**: `scripts/run_inference.py`  
-Runs prediction and evaluation using the saved adapter weights from a previous fine-tuning run.
+```bash
+python scripts/run_finetuning.py model_id=phi task=safety 
+```
+
+These parameters can be controlled as well. You can edit them directly in `config/finetune_config.yaml` or override them from command line.
+
+```yaml
+sft_config:
+  batch_size: 16                  
+  epochs: 10                      
+  lr: 2e-5                        
+  evaluation_strategy: "epoch"   
+  gradient_accumulation_steps: 2 
+  max_grad_norm: 0.3             
+  lr_scheduler_type: "cosine"    
+  warmup_ratio: 0.05             
+  optim: "paged_adamw_32bit"     
+  logging_steps: 10              
+  max_seq_length: 512            
+  weight_decay: 0.005            
+  loss_function: "custom"        
+
+lora_config:
+  r: 8
+  alpha: 16
+  target_modules: "all-linear" 
+  dropout: 0.05
+```
+
+### Loss Function 
+
+The `loss_function` field in the `sft_config` section determines how the model evaluates prediction errors during training. It supports two options:
+
+#### `"standard"`
+- **Description**: Uses the default *Cross-Entropy Loss* provided by Hugging Face Transformers.
+- **Behavior**: Treats all class labels equally during optimization.
+- **Use Case**: Best when your dataset is relatively balanced or you don't need to adjust for class imbalance.
+
+####  `"custom"`
+- **Description**: Uses a **weighted cross-entropy loss**, where class weights are automatically computed as the inverse frequency of each label in the training dataset.
+
+> ⚠️ Note: The `loss_function` setting is **only applied when `model_type=classification`**. For causal language modeling tasks, loss behavior follows standard language modeling loss.
+
 
 **Example:**
+
+If parameters are modified from the config file then it's enough to run`
+
+```bash
+python scripts/run_finetuning.py model_id=mistral task=cluster sft_config.loss_function=standard sft_config.lr=1e-5
+```
+
+Otherwise, params can be overriden the following ways`
+
+### Output Format and Run Name
+
+All fine-tuned models, metrics, and logs are saved under the following directory:
+
+```
+results/finetuning/{model_id}/{task}/{run_name}/
+```
+
+####  Run Name Format
+Each run is uniquely identified by a name encoding key training parameters:
+
+```
+llama3-cluster-classification-lr2e-05-bs16-20250715_182741
+```
+
+
+This tells you:
+- `llama3`: Model ID used
+- `cluster`: Classification task
+- `classification`: Model type (as opposed to causal)
+- `lr2e-05`: Learning rate was 2e-5
+- `bs16`: Batch size was 16
+- `20250715_182741`: Timestamp when the run started
+
+This naming convention ensures that results are organized and easily traceable to the experiment's configuration.
+
+###  Inference
+
+**Script**: `scripts/run_inference.py`  
+Runs prediction and evaluation using the saved adapter weights from a previous fine-tuning run.
+
+#### 🔧 Important Parameter: `run_name`
+
+The `run_name` identifies the exact fine-tuning run and should match the folder created under:
+
+```
+results/finetuning/{model_id}/{task}/{run_name}
+```
+
+
+It is automatically generated during fine-tuning using the pattern:
+
+```
+{model_id}-{task}-{model_type}-lr{learning_rate}-bs{batch_size}-{timestamp}
+```
+
+You must pass the correct `run_name` from a previous training job to ensure the model loads the right adapter and saves predictions in the correct folder.
+
+#### ✅ Example:
 
 ```bash
 python scripts/run_inference.py task=cluster model_id=llama3 run_name=llama3-cluster-classification-lr2e-05-bs16-20250706_214753
 ```
-
-> 🔧 For details on both, see:  
-> [Fine-Tuning Configuration Explained](#️fine-tuning-configuration-explained)  
-> [Inference Configuration Explained](#️inference-configuration-explained)
 
 ---
 
