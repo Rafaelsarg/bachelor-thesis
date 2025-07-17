@@ -741,23 +741,39 @@ You can launch fine-tuning in two ways: using command-line overrides or relying 
 
 Override any config value directly via CLI. This is useful for quick tests or one-off experiments.
 
-#### 🔹 Basic Example
+#### 🔹 Basic Examples
 
+
+You can override parameters defined in `config/finetune_config.yaml` directly in the command line. This is useful for quickly testing different model types, learning rates, loss functions, etc.
+
+Fine-tune LLaMA 3 on the cluster classification task using classification head
 ```bash
-python scripts/run_finetuning.py model_id=llama3 task=cluster model_type=classification
+python scripts/run_finetuning.py model_id=llama task=cluster model_type=classification
 ```
 
-#### 🔹 With Custom Hyperparameters
+Fine-tune Mistral-7B on safety classification using standard loss and custom learning rate
 ```bash
-python scripts/run_finetuning.py \
-  model_id=mistral \
-  task=safety \
-  model_type=classification \
-  sft_config.loss_function=standard \
-  sft_config.lr=1e-5 \
-  sft_config.batch_size=8
-
+python scripts/run_finetuning.py model_id=mistral task=safety  model_type=classification sft_config.loss_function=standard sft_config.lr=1e-5
 ```
+
+Fine-tune Mistral-7B on safety classification using custom loss
+```bash
+python scripts/run_finetuning.py model_id=llama task=cluster  model_type=classification sft_config.loss_function=custom 
+```
+
+Fine-tune Mistral-7B on safety classification with causal language modelling
+```bash
+python scripts/run_finetuning.py model_id=llama task=cluster  model_type=causal 
+```
+
+
+#### ⚠️ Notes:
+- The `loss_function` is **only applied** when `model_type=classification`.  
+  It is **ignored** for `model_type=causal`.
+- `model_id=phi` **does not support** `model_type=classification` and must be used with `model_type=causal`.
+
+> **Note:** All other values will still be taken from the YAML file unless explicitly overridden in the command line.
+
 
 ⚠️ loss_function is only applied if model_type=classification.
 model_id=phi supports only model_type=causal.
@@ -826,7 +842,7 @@ At the top of the `finetune_config.yaml` file, you'll find the primary parameter
   - **How it works**: Determines which dataset, prompt formatter, and label mappings are used.
 
 - **`model_id`**: Internal model alias for config lookup.  
-  - **Examples**: `"llama3"`, `"mistral"`, `"phi"`  
+  - **Examples**: `"llama"`, `"mistral"`, `"phi"`  
   - **How it works**: Used to link model name and formatter logic from `model_map` and `formatter_registry`.
 
 ---
@@ -864,55 +880,6 @@ At the top of the `finetune_config.yaml` file, you'll find the primary parameter
 - **`target_modules`**: Target modules.  
   - **Type**: default `all-linear`
 
-### 1. **Using Command-Line Overrides**
-
-You can override parameters defined in `config/finetune_config.yaml` directly in the command line. This is useful for quickly testing different model types, learning rates, loss functions, etc.
-#### Examples:
-
-```bash
-# Fine-tune LLaMA 3 on the cluster classification task using classification head
-python scripts/run_finetuning.py model_id=llama task=cluster model_type=classification
-```
-
-```bash
-# Fine-tune Mistral-7B on safety classification using standard loss and custom learning rate
-python scripts/run_finetuning.py model_id=mistral task=safety  model_type=classification sft_config.loss_function=standard sft_config.lr=1e-5
-```
-
-```bash
-# Fine-tune Mistral-7B on safety classification using custom loss
-python scripts/run_finetuning.py model_id=llama task=cluster  model_type=classification sft_config.loss_function=custom 
-```
-
-```bash
-# Fine-tune Mistral-7B on safety classification with causal language modelling
-python scripts/run_finetuning.py model_id=llama task=cluster  model_type=causal 
-```
-
-
-#### ⚠️ Notes:
-- The `loss_function` is **only applied** when `model_type=classification`.  
-  It is **ignored** for `model_type=causal`.
-- `model_id=phi` **does not support** `model_type=classification` and must be used with `model_type=causal`.
-
-> **Note:** All other values will still be taken from the YAML file unless explicitly overridden in the command line.
-
-### 2. 🛠 **Using the YAML Configuration**
-
-All parameters can be defined in `config/finetune_config.yaml`, including the task type, model, learning rate, batch size, and LoRA settings.
-
-To run using only the YAML file:
-
-```bash
-python scripts/run_finetuning.py
-```
-
-This is the preferred way when:
-- You are testing multiple configurations
-- You want reproducibility
-- You need to log and track configurations systematically (e.g., via W&B)
-
----
 
 ### 📁 Results Output Structure
 
