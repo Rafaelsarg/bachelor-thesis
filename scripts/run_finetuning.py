@@ -27,7 +27,7 @@ FORMATTER_REGISTRY = {
             "classification": MistralTopicPromptFormatterClassification
         }
     },
-    "llama3": {
+    "llama": {
         "safety": {
             "causal": LlamaSafetyPromptFormatterCausal,
             "classification": LlamaSafetyPromptFormatterClassification

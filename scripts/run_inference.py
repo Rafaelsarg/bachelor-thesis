@@ -37,7 +37,7 @@ from finetuning.formatters.phi_formatter import (
 # 📦 Formatter Registry
 # ─────────────────────────────────────────────
 FORMATTER_REGISTRY = {
-    "llama3": {
+    "llama": {
         "safety": {
             "causal": LlamaSafetyPromptFormatterCausal,
             "classification": LlamaSafetyPromptFormatterClassification,

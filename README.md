@@ -83,10 +83,20 @@ Before running any experiments or scripts in this repository, make sure your env
 - **[Hugging Face](https://huggingface.co) Account**  
   Required to download pre-trained models (e.g., Mistral, Phi, LLaMA) from the Hugging Face Hub.  
 
-  You can:
-  - Use the provided token in `config/` (recommended for reproducibility), or
+  You must:
   - [Sign up for a free account](https://huggingface.co/join)
   - [Generate your own access token](https://huggingface.co/settings/tokens) with at least `read` permission
+
+  ✅ **Token Placement**  
+  Insert your Hugging Face token as a string in the following configuration files:
+
+  ```yaml
+  # config/finetune_config.yaml
+  hf_token: "your_token_here"
+
+  # config/inference_config.yaml
+  hf_token: "your_token_here"
+  ```
 
   ⚠️ **LLaMA Access Required**  
   For models like `meta-llama/Meta-Llama-3-8B-Instruct`, you must request access from Meta via the [model page](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct) before using the model.
@@ -105,7 +115,7 @@ Before running any experiments or scripts in this repository, make sure your env
   - Or disable W&B logging
 
   ⚠️ **No W&B? No problem!**  
-  On first run, you’ll be asked whether to enable logging. 
+  During the run, you’ll be asked whether to enable logging. 
 
   ```bash
   wandb: (1) Create a W&B account
@@ -210,7 +220,7 @@ Ollama is required only for running prompting tasks.
 **Install Ollama:**
 - macOS/Linux:  
 ```bash
-  curl -fsSL https://ollama.ai/install.sh | sh  
+  curl -fsSL https://ollama.com/install.sh | sh 
 ```
 - Windows:  
   Download the installer from https://ollama.com/
@@ -283,9 +293,17 @@ You can mix and match different **tasks**, **vectorizers** and **classifiers** u
 
 ---
 
-**Basic example:**
+**Basic examples:**
 ```bash
 python scripts/run_baselines.py task=cluster vectorizer.type=bow classifier.type=lr
+```
+
+```bash
+python scripts/run_baselines.py task=safety vectorizer.type=bow classifier.type=nb
+```
+
+```bash
+python scripts/run_baselines.py task=cluster vectorizer.type=sentence_bert classifier.type=svm
 ```
 
 **With hyperparameter overrides:**
@@ -297,7 +315,6 @@ python scripts/run_baselines.py task=cluster \
   vectorizer.grid_params.ngram_range=[[1,1]] \
   classifier.type=svm \
   classifier.grid_params.svm.C=[1] \
-  classifier.grid_params.svm.kernel=[linear]
 ```
 
 #### ✅ Option 2: Using the YAML Configuration File
@@ -510,10 +527,16 @@ Useful for quick testing without editing the YAML file.
 python scripts/run_prompting.py task=cluster prompt=zero_shot model=mistral
 ```
 
-**Example – Few-shot Cluster Classification**
+**Example – Few-shot Safety Classification**
 ```bash
 python scripts/run_prompting.py task=safety prompt=few_shot model=llama
 ```
+
+**Example – Custom Cluster Classification**
+```bash
+python scripts/run_prompting.py task=cluster prompt=custom model=phi
+```
+
 ⚠️ Command-line overrides are ideal for small experiments. For reproducibility and complex prompts, use the YAML config instead.
 
 ---
@@ -762,7 +785,9 @@ python scripts/run_finetuning.py
 
 These scripts handle fine-tuning and inference for large language models (LLMs) like LLaMA 3, Mistral, or Phi, using QLoRA and Hugging Face PEFT for efficient training. Fine-tuning adapts pre-trained LLMs for dietary topic (`cluster`) or safety classification (`safety`) tasks, while inference generates predictions using the fine-tuned models.
 
-⚠️ **Important**: Fine-tuning for safety classification can take 10–24 hours, while dietary topic classification takes 1–3 hours, depending on parameters. Large batch sizes may cause memory errors due to insufficient VRAM.
+⚠️ **Hugging Face Token**: Make sure to obtain your Hugging Face access token and insert it into the config files as described at the beginning of this README.
+
+⚠️ **Important**: Fine-tuning for safety classification can take 10–40 hours, while dietary topic classification takes 1–3 hours, depending on parameters. Large batch sizes may cause memory errors due to insufficient VRAM.
 
 ## 🧪 Weights & Biases (W&B) Logging
 
@@ -816,7 +841,6 @@ At the top of the `finetune_config.yaml` file, you'll find the primary parameter
 
 - **`learning_rate`**: The learning rate for optimization.  
   - **Type**: Float (e.g., `2e-5`, `5e-5`)  
-  - **Note**: Too high may lead to instability; too low may slow down training.
 
 - **`max_seq_length`**: Maximum input sequence length.  
   - **Type**: Integer (e.g., `512`)  
@@ -832,11 +856,10 @@ At the top of the `finetune_config.yaml` file, you'll find the primary parameter
   - **Type**: Integer (e.g., `8`, `16`)
 
 - **`alpha`**: Scaling factor for LoRA updates.  
-  - **Type**: Float (e.g., `16.0`, `32.0`)
+  - **Type**: Float (e.g., `16`, `32`)
 
 - **`dropout`**: Dropout probability for LoRA layers.  
   - **Type**: Float (e.g., `0.05`)  
-  - **How it works**: Helps prevent overfitting during low-rank adaptation.
 
 - **`target_modules`**: Target modules.  
   - **Type**: default `all-linear`
@@ -848,13 +871,24 @@ You can override parameters defined in `config/finetune_config.yaml` directly in
 
 ```bash
 # Fine-tune LLaMA 3 on the cluster classification task using classification head
-python scripts/run_finetuning.py model_id=llama3 task=cluster model_type=classification
+python scripts/run_finetuning.py model_id=llama task=cluster model_type=classification
 ```
 
 ```bash
 # Fine-tune Mistral-7B on safety classification using standard loss and custom learning rate
 python scripts/run_finetuning.py model_id=mistral task=safety  model_type=classification sft_config.loss_function=standard sft_config.lr=1e-5
 ```
+
+```bash
+# Fine-tune Mistral-7B on safety classification using custom loss
+python scripts/run_finetuning.py model_id=llama task=cluster  model_type=classification sft_config.loss_function=custom 
+```
+
+```bash
+# Fine-tune Mistral-7B on safety classification with causal language modelling
+python scripts/run_finetuning.py model_id=llama task=cluster  model_type=causal 
+```
+
 
 #### ⚠️ Notes:
 - The `loss_function` is **only applied** when `model_type=classification`.  
