@@ -29,7 +29,7 @@ class GenericInference(BaseInference):
 
         with torch.no_grad():
             if self.model_type == "causal":
-                outputs = self.model.generate(**inputs, max_new_tokens=10)
+                outputs = self.model.generate(**inputs, max_new_tokens=10, use_cache=False)
                 decoded = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
                 return self._extract_prediction(decoded)
 
